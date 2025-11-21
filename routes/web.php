@@ -22,6 +22,7 @@ use App\Http\Controllers\SupportClientChatController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\DevNotesController;
 use App\Http\Controllers\ManualPasswordResetController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -315,7 +316,27 @@ Route::middleware(['dev'])->prefix('dev')->group(function () {
     Route::get('/notes/{note}', [DevNotesController::class, 'index']);
 });
 
+Route::post('/online', [UserController::class, 'keepAlive'])->middleware('auth');
 
+Route::get('/online', function () {
+    if (auth()->check()) {
+        switch (auth()->user()->privLevel) {
+            case 'admin':
+                return redirect()->route('akunadmin');
+            case 'spv':
+                return redirect()->route('SPV.spv');
+            case 'developer':
+                return redirect()->route('Developer.developer');
+            case 'support':
+                return redirect()->route('Support.support');
+            case 'super_admin':
+                return redirect()->route('admin.admin');
+            default:
+                return redirect('/login')->withErrors(['Unauthorized role']);
+        }
+    }
+    return redirect()->route('login');
+});
 
 Route::prefix('support/clientchat')->name('SupportClientChat.')->middleware('support')->group(function () {
     Route::get('/', [SupportClientChatController::class, 'index'])->name('supportclientchat');

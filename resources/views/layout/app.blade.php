@@ -135,4 +135,5 @@
   });
 </script>
 </body>
+@include('layout.session')
 </html>

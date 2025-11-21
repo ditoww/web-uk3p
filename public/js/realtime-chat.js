@@ -737,12 +737,23 @@ class RealtimeChat {
     linkifyMessage(messageDiv) {
         const messageElements = messageDiv.querySelectorAll('.message');
         messageElements.forEach(element => {
-            const rawText = element.textContent || '';
+            /*const rawText = element.textContent || '';
             const escapedText = this.escapeHTML(rawText);
             const trimmedText = escapedText.replace(/^\n+/, '').replace(/\n+$/, '');
             const withBreaks = trimmedText.replace(/\n/g, '<br>');
             const linkifiedText = this.linkify(withBreaks);
-            element.innerHTML = linkifiedText;
+            element.innerHTML = linkifiedText;*/
+
+            let text = element.textContent || "";
+
+            text = text.replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/^\n+|\n+$/g, "")
+                        .replace(/\n/g, "<br>")
+                        .replace(/(https?:\/\/[^\s<]+)/g, m => `<a href="${m}" target="_blank" rel="noopener">${m}</a>`);
+
+            element.innerHTML = text;
         });
     }
 
@@ -874,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function closeTypingStatus() {
-        await window.realtimeChat.setTypingStatus(isSupportChat, false);
+        await window.realtimeChat.sendTypingStatus(isSupportChat, false);
     }
 
     window.addEventListener("beforeunload", closeTypingStatus);

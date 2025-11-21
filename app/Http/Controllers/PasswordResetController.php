@@ -25,15 +25,16 @@ class PasswordResetController extends Controller
 
     public function sendEmail(Request $request)
     {
-        $request->validate(['email' => 'required|string'], [
+        $request->validate(['email' => 'required|string|max:191'], [
             'email.required' => "Mohon isi email atau username Anda.",
-            'email.string' => "Mohon isi email atau username yang valid."
+            'email.string' => "Mohon isi email atau username yang valid.",
+            'email.max' => "Email atau username tersebut harus memiliki 191 hruf atau ke bawah."
         ]);
 
         $field = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         // Check if user exists
-        $user = User::where($field, $request->email)->first();
+        $user = User::where($field, $request->email)->where('isDeleted', 0)->first();
 
         if (!$user) {
             $message = $field === 'email'

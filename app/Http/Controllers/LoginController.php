@@ -21,11 +21,13 @@ class LoginController extends Controller
     {
         // Validasi: satu field "login" untuk email/username
         $request->validate([
-            'login' => ['required', 'string'],
-            'password' => ['required'],
+            'login' => ['required', 'string', 'max:191'],
+            'password' => ['required', 'max:191'],
         ], [
             'login.required' => 'Mohon isi email atau username Anda.',
-            'password.required' => 'Mohon isi password Anda.'
+            'login.max' => 'Email harus dibawah 192 huruf.',
+            'password.required' => 'Mohon isi password Anda.',
+            'password.max' => 'Password harus dibawah 192 huruf.',
         ]);
 
         $this->ensureIsNotRateLimited($request);
@@ -39,7 +41,7 @@ class LoginController extends Controller
         // Cek status user terhapus
         $user = User::where($field, $login)->first();
         if ($user && $user->isDeleted !== 0) {
-            return back()->withErrors([$field => ucfirst($field).' tersebut telah dihapus.']);
+            return back()->withErrors([$field => ucfirst($field).' tersebut telah dihapus. Mohon kontak admin/super admin untuk membuat akun baru.']);
         }
 
         // Coba autentikasi

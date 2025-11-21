@@ -36,6 +36,13 @@ class DevNotesController extends Controller
     public function create(Request $request)
     {
         $user = Auth::user();
+
+        $request->validate([
+            'title' => 'nullable|max:191'
+        ],[
+            'title.max' => 'Mohon berikan judul note yang lebih pendek.'
+        ]);
+
         $title = trim((string)$request->input('title', 'Untitled')) ?: 'Untitled';
 
         $note = DevNoteBlob::create([
@@ -85,6 +92,12 @@ class DevNotesController extends Controller
     {
         $user = Auth::user();
         abort_if($note->user_id !== $user->id, 403);
+
+        $request->validate([
+            'title' => 'nullable|max:191'
+        ],[
+            'title.max' => 'Mohon berikan judul note yang lebih pendek.'
+        ]);
 
         $title = trim((string)$request->input('title', 'Untitled')) ?: 'Untitled';
         $note->update(['title' => $title]);

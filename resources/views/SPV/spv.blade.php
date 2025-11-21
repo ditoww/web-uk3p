@@ -138,7 +138,6 @@
           </div>
         </div>
         <div>
-          <div class="mb-2"><strong>Status:</strong> {{ $user->status ?? '-' }}</div>
           <div class="mb-2"><strong>No HP:</strong> {{ $user->phone_number ?? '-' }}</div>
           @php
             $timezone = session('user_timezone', config('app.timezone'));
@@ -432,6 +431,6 @@ function saveData(ev){
   }
 }
 </script>
-
+@include('layout.session')
 </body>
 </html>

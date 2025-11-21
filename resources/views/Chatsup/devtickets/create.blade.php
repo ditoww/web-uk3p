@@ -121,7 +121,7 @@
         <div class="mb-3">
           <label class="form-label">Attachment Gambar (opsional)</label>
           <input type="file" id="devTicketImageInput" name="image" accept=".jpg,.jpeg,.png,.webp" class="form-control"/>
-          <small class="text-muted">Max 2MB. JPG/PNG/WEBP.</small>
+          <small class="text-muted">Max 5MB. JPG / PNG / WEBP akan dikompres otomatis.</small>
         </div>
 
         <div class="d-flex gap-2">
@@ -331,8 +331,10 @@
     var file = input.files && input.files[0];
     if (!file) return;
 
-    var max2MB = 2 * 1024 * 1024;
-    if (file.size > max2MB) {
+    if (file.name.length > 191) return;
+
+    var max5MB = 5 * 1024 * 1024;
+    if (file.size > max5MB) {
       input.value = '';
       return;
     }

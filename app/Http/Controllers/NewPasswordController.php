@@ -39,15 +39,16 @@ class NewPasswordController extends Controller
     public function changePassword(Request $request)
     {
         $request->validate([
-            'token' => 'required',
+            'token' => 'required|max:191',
             'email' => 'required|email',
-            'password' => 'required|confirmed'
+            'password' => 'required|max:191|confirmed'
         ], [
             'password.required' => 'Mohon isi password baru Anda.',
+            'password.max' => 'Password harus dibawah 192 huruf.',
             'password.confirmed' => 'Kedua password tersebut tidak sama.'
         ]);
 
-        $resetter = DB::table('password_reset_tokens')
+        $resetter = DB::table('user_password_reset_tokens')
             ->where('email', $request->email)
             ->first();
 
@@ -55,7 +56,7 @@ class NewPasswordController extends Controller
             return back()->withErrors(['token' => 'Token tidak valid atau sudah kedaluwarsa.']);
         }
 
-        $akun = User::where('email', $request->email)->first();
+        $akun = User::where('email', $request->email)->where('isDeleted', 0)->first();
         if (!$akun) {
             return back()->withErrors(['email' => 'Email tidak ditemukan.']);
         }
@@ -63,7 +64,7 @@ class NewPasswordController extends Controller
         $akun->password = Hash::make($request->password);
         $akun->save();
 
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        DB::table('user_password_reset_tokens')->where('email', $request->email)->delete();
 
         return redirect()->route('login')->with('status', 'Password berhasil diubah.');
     

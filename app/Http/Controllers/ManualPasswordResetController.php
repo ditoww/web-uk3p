@@ -18,11 +18,12 @@ class ManualPasswordResetController extends Controller //Made in case of user ne
     public function update(Request $request, $id)
     {
         $rules = [
-            'pass' => 'required|confirmed',
+            'pass' => 'required|confirmed|max:191',
         ];
         
         $messages = [
             'pass.required' => 'Mohon isi password baru.',
+            'pass.max' => 'Password harus dibawah 192 huruf.',
             'pass.confirmed' => 'Password tersebut tidak sama.',
         ];
 
@@ -42,12 +43,13 @@ class ManualPasswordResetController extends Controller //Made in case of user ne
     public function validateUpdate(Request $request, $id): \Illuminate\Http\JsonResponse
     {
         $rules = [
-            'pass' => 'required|confirmed',
+            'pass' => 'required|confirmed|max:191',
         ];
         
         $messages = [
             'pass.required' => 'Mohon isi password baru.',
             'pass.confirmed' => 'Password tersebut tidak sama.',
+            'pass.max' => 'Password harus dibawah 192 huruf.',
         ];
 
         $validator = Validator::make($request->only(['pass', 'pass_confirmation']), $rules, $messages);

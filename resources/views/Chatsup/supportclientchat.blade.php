@@ -3,6 +3,7 @@
 @section('title', 'Chat Client')
 
 @section('styles')
+<script src="/js/format-chat.js" defer></script>
 <style>
   .chat-body {
     padding: 20px;
@@ -501,7 +502,7 @@
                           @endphp
                           @if($att['type'] === 'image')
                           <div class="mt-2">
-                            <img src="{{ route('images.view', ['filename' => $att['name']]) }}" alt="{{ $att['name'] }}" class="img-thumbnail rounded shadow-sm chat-image-clickable" style="max-width: 250px; max-height: 200px; object-fit: cover;">
+                            <img src="{{ route('images.view', ['filename' => $att['name']]) }}" alt="{{ $att['name'] }}" class="img-thumbnail rounded shadow-sm chat-image-clickable" style="width: {{ $att['width'] ?? 250 }}px; height: {{ $att['height'] ?? 200 }}px; object-fit: cover;">
                           </div>
                           @else
                             <div class="file-box mt-2 p-2 rounded bg-light border d-inline-block">
@@ -535,7 +536,7 @@
                         @endphp
                         @if($att['type'] === 'image')
                           <div class="mt-2 text-end">
-                            <img src="{{ route('images.viewSupport', ['filename' => $att['name']]) }}" alt="{{ $att['name'] }}" class="img-thumbnail rounded shadow-sm chat-image-clickable" style="max-width: 250px; max-height: 200px; object-fit: cover;">
+                            <img src="{{ route('images.viewSupport', ['filename' => $att['name']]) }}" alt="{{ $att['name'] }}" class="img-thumbnail rounded shadow-sm chat-image-clickable" style="width: {{ $att['width'] ?? 32 }}px; height: {{ $att['height'] ?? 32 }}px; object-fit: cover;">
                           </div>
                         @else
                             <div class="file-box mt-2 p-2 rounded bg-light border d-inline-block">
@@ -664,7 +665,7 @@
           <div class="mb-3">
             <label class="form-label">Attachment Gambar (opsional)</label>
             <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
-            <small class="text-muted">Max 2MB. JPG/PNG/WEBP.</small>
+            <small class="text-muted">Max 5MB. JPG/PNG/WEBP.</small>
           </div>
         </div>
         <div class="modal-footer">
@@ -711,6 +712,7 @@
     const ext = getExt(f.name);
     if (!allowedImages.includes(ext)) return false;
     if (f.size > maxSize) return false;
+    if (f.name.length > 191) return false;
 
     const sig = await getFileSignature(f);
 
@@ -731,6 +733,7 @@
     const ext = getExt(f.name);
     if (!allowedAtts.includes(ext)) return false;
     if (f.size > maxSize) return false;
+    if (f.name.length > 191) return false;
 
     const sig = await getFileSignature(f);
 
@@ -841,7 +844,7 @@
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       if (lastValidFile) {
         const dt = new DataTransfer();
         dt.items.add(lastValidFile);

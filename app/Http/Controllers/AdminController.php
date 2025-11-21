@@ -30,7 +30,7 @@ class AdminController extends Controller
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
-            'pass' => 'required',
+            'pass' => 'required|max:191',
             'tgl' => 'nullable|date',
             'status' => 'nullable|in:active,Away',
             'upload' => 'nullable|mimes:jpg,png,jpeg|max:5120',
@@ -48,6 +48,7 @@ class AdminController extends Controller
             'email.max' => 'Email perlu 191 huruf atau kebawah.',
             'nohp.regex' => 'Nomor HP tersebut tidak valid.',
             'pass.required' => 'Mohon isi password untuk Admin.',
+            'pass.max' => 'Password harus dibawah 192 huruf.',
             'upload.max' => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
             'upload.mimes' => 'Gambar Profile Picture harus jpg, png, atau, jpeg.'
         ];
@@ -245,7 +246,7 @@ class AdminController extends Controller
             'nama'     => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email'    => 'nullable|email|max:191',
             'nohp'     => 'nullable|regex:/^[0-9]{10,13}$/',
-            'pass'     => 'required',
+            'pass'     => 'required|max:191',
             'tgl'      => 'nullable|date',
             'status'   => 'nullable|in:active,Away',
             'upload'   => 'nullable|mimes:jpg,png,jpeg|max:5120',
@@ -263,6 +264,7 @@ class AdminController extends Controller
             'email.max'         => 'Email perlu 191 huruf atau kebawah.',
             'nohp.regex'        => 'Nomor HP tersebut tidak valid.',
             'pass.required'     => 'Mohon isi password untuk Admin.',
+            'pass.max'          => 'Password harus dibawah 192 huruf.',
             'upload.max'        => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
             'upload.mimes'      => 'Gambar Profile Picture harus jpg, png, atau jpeg.'
         ];

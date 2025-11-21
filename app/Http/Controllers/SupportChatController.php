@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\DevTicket;
 use App\Models\DevChat;
-use App\Services\WhatsAppNotificationService;
+use App\Rules\StrictDocx;
+//use App\Services\WhatsAppNotificationService;
 
 use Imagick;
 
@@ -171,6 +172,13 @@ class SupportChatController extends Controller
                 ->count();
 
             foreach ($request->file('attachment') as $idx => $file) {
+                $extension = strtolower($file->getClientOriginalExtension());
+                if ($extension === 'docx') {
+                    $rule = new StrictDocx();
+                    if (!$rule->passes('attachment.*', $file)) {
+                        continue;
+                    }
+                }
                 $size = $file->getSize();
                 $newFileName = $datePrefix . '-' . ($attachmentCount + $idx + 1) . '_' . $file->getClientOriginalName();
                 $targetPath = public_path('chat_attachments/' . $newFileName);
@@ -268,7 +276,7 @@ class SupportChatController extends Controller
         }
 
         // WhatsApp notification (support -> developer)
-        try {
+        /*try {
             $ticket = DB::table('devTickets')
                 ->join('users as dev', 'devTickets.devID', '=', 'dev.id')
                 ->join('users as support', 'devTickets.supportID', '=', 'support.id')
@@ -284,7 +292,7 @@ class SupportChatController extends Controller
                     'chatType' => 'support_to_dev'
                 ]);
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {}*/
         // Redirect kembali ke halaman tiket dengan pesan sukses
         return redirect()->route('Chatsup.chatsup', parameters: ['ticket_dev' => $ticketId])
                          ->with('success', 'Message sent successfully.');
@@ -481,7 +489,7 @@ class SupportChatController extends Controller
             }
 
             // WhatsApp notification (support -> developer)
-            try {
+            /*try {
                 $ticket = DB::table('devTickets')
                     ->join('users as dev', 'devTickets.devID', '=', 'dev.id')
                     ->join('users as support', 'devTickets.supportID', '=', 'support.id')
@@ -497,7 +505,7 @@ class SupportChatController extends Controller
                         'chatType' => 'support_to_dev'
                     ]);
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {}*/
 
             $timezone = session('user_timezone', config('app.timezone'));
             $cTime = $now->clone()->timezone($timezone);

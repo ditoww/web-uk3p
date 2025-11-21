@@ -26,7 +26,7 @@ class AkunAdminController extends Controller
 
         return view('Admin.akun', [
             'alldata' => $admins,
-            'roles' => DevRole::all(),
+            'roles' => DevRole::where('isDeleted', 0)->get(),
         ]);
     }
 
@@ -163,7 +163,7 @@ class AkunAdminController extends Controller
     public function edit($username)
     {
         $akun = User::where('username', $username)->first();
-        $roles = DevRole::all();
+        $roles = DevRole::where('isDeleted', 0)->get();
 
         if (!$akun) {
             return redirect()->route('akunadmin')->with('error', 'Akun tidak ditemukan.');
@@ -268,7 +268,7 @@ class AkunAdminController extends Controller
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
             'role' => 'required|exists:devRoles,id',
-            'pass' => 'required',
+            'pass' => 'required|max:191',
             'tgl' => 'nullable|date',
             'status' => 'nullable|in:active,Away',
             'upload' => 'nullable|mimes:jpg,png,jpeg|max:5120',
@@ -288,6 +288,7 @@ class AkunAdminController extends Controller
             'role.required' => 'Mohon pilih sebuah role untuk Developer.',
             'role.exists' => 'Role tersebut tidak tersimpan di database.',
             'pass.required' => 'Mohon isi password untuk Developer.',
+            'pass.max' => 'Password harus dibawah 192 huruf.',
             'tgl.date' => 'Tanggal tersebut bukan tanggal yang valid.',
             'upload.max' => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
             'upload.mimes' => 'Gambar Profile Picture harus jpg, png, atau jpeg.'

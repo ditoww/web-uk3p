@@ -15,13 +15,12 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         DB::table('users')->insert([ //TODO: Replace with actual workers in the future, and put in env.
-            'name' => "SUPER DEVELOPER",
-            'username' => "DEV 7SOFT",
-            'email' => "dev.7soft@gmail.com",
+            'name' => "Aaron Haydes",
+            'username' => "Aaron",
+            'email' => "Aaron.esteban@gmail.com",
             'password' => Hash::make(env('SUPER_ADMIN_PASSWORD_ONE')),
             'privLevel' => "super_admin",
             'phone_number' => "08123456789"
         ]);
     }
 }
-

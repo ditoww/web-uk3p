@@ -8,12 +8,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Models\ClientTicket;
 use App\Models\ClientChat;
+use App\Models\Client;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NotificationMail;
+use App\Mail\CompleteMail;
 use Carbon\Carbon;
+use App\Rules\StrictDocx;
 
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Storage;
 use Imagick;
-use App\Services\WhatsAppNotificationService;
+//use App\Services\WhatsAppNotificationService;
 use App\Models\DevRole;
 
 
@@ -31,7 +36,8 @@ class SupportClientChatController extends Controller
             'role_id' => 'required_if:case_type,external|nullable|integer|exists:devRoles,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            // Naikkan limit ke 5MB
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
 
         $validated = $request->validate($rules);
@@ -74,6 +80,10 @@ class SupportClientChatController extends Controller
 
         if ($request->hasFile('image')) {
             $img = $request->file('image');
+            // Safety hard limit (jika php.ini lebih besar)
+            if ($img->getSize() > 5 * 1024 * 1024) {
+                return back()->withErrors(['image' => 'File melebihi 5MB'])->withInput();
+            }
             $size = $img->getSize();
             $ext = strtolower($img->getClientOriginalExtension());
             $imageCount = DB::table('devAttachments')
@@ -106,12 +116,15 @@ class SupportClientChatController extends Controller
                 $ratio = min($maxDim / $w, $maxDim / $h);
                 $imagick->resizeImage((int)($w * $ratio), (int)($h * $ratio), \Imagick::FILTER_LANCZOS, 1);
             }
-
+            // Extra downscale kualitas jika masih besar >1.5MB
             if ($ext === 'jpg' || $ext === 'jpeg') {
                 $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
                 $imagick->setImageCompressionQuality(82);
+                if ($size > 1500 * 1024) {
+                    $imagick->setImageCompressionQuality(75);
+                }
             } elseif ($ext === 'webp') {
-                $imagick->setImageCompressionQuality(82);
+                $imagick->setImageCompressionQuality($size > 1500 * 1024 ? 72 : 82);
             } elseif ($ext === 'png') {
                 $imagick->setOption('png:compression-level', '9');
                 $imagick->setOption('png:compression-filter', '5');
@@ -257,11 +270,38 @@ class SupportClientChatController extends Controller
             $attList = [];
             foreach ($msgAttachments as $att) {
                 $isImage = in_array(strtolower($att->fileExtension), ['jpg', 'jpeg', 'png', 'webp']);
+                $normalizedUrl = $isImage ? 'chat_images/' .  $att->fileName
+                                      : 'chat_attachments/' . $att->fileName;
+
+                $width = null;
+                $height = null;
+                $displayWidth = null;
+                $displayHeight = null;
+
+                if ($isImage) {
+                    $imagePath = public_path($normalizedUrl);
+                    if (file_exists($imagePath)) {
+                        $gambar = new Imagick($imagePath);
+                        $width = $gambar->getImageWidth();
+                        $height = $gambar->getImageHeight();
+
+                        $maxW = 250;
+                        $maxH = 200;
+                        $ratio = min($maxW / $width, $maxH / $height, 1);
+
+                        $displayWidth = (int)($width * $ratio);
+                        $displayHeight = (int)($height * $ratio);
+                        $gambar->clear();
+                        $gambar->destroy();
+                    }
+                }
                 $attList[] = [
                     'type' => $isImage ? 'image' : 'file',
                     'name' => $att->fileName,
                     'size' => $att->fileSize,
                     'extension' => $att->fileExtension,
+                    'width' => $isImage ? $displayWidth : '',
+                    'height' => $isImage ? $displayHeight : '' 
                 ];
             }
 
@@ -303,6 +343,7 @@ class SupportClientChatController extends Controller
         $now = now();
         $chatCreated = $now->clone();
         $datePrefix = 'SS-' . \Carbon\Carbon::parse($chatCreated)->format('Ymd');
+        $imageResolutions = [];
 
         if (!DB::table('clientTickets')->where('id', $ticketId)->where('supportID', $userId)) return back();
 
@@ -318,6 +359,7 @@ class SupportClientChatController extends Controller
         ]);
 
         $chatId = $chat->id;
+        $attCount = 0;
 
         if ($request->hasFile('attachment')) {
             $files = $request->file('attachment');
@@ -332,6 +374,15 @@ class SupportClientChatController extends Controller
             }
 
             foreach ($files as $idx => $file) {
+                $extension = strtolower($file->getClientOriginalExtension());
+                if ($extension === 'docx') {
+                    $rule = new StrictDocx();
+                    if (!$rule->passes('attachment.*', $file)) {
+                        continue;
+                    }
+                }
+                $imageResolutions[] = [0,0];
+                $attCount++;
                 $newFileName = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' .($idx + 1) . '_' . $file->getClientOriginalName();
                 $file->move(public_path('chat_attachments/'), $newFileName);   
                 $filePath = asset('chat_attachments/' . $newFileName);
@@ -364,6 +415,7 @@ class SupportClientChatController extends Controller
 
             foreach ($images as $idx => $gambar) {
                 $size = $gambar->getSize();
+                $attCount++;
                 $ext = strtolower($gambar->getClientOriginalExtension());
                 $namaGambar = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' . ($idx + 1) . '_' . $gambar->getClientOriginalName();
                 try {
@@ -395,23 +447,28 @@ class SupportClientChatController extends Controller
                         $ratio = min($maxDim / $w, $maxDim / $h);
                         $imagick->resizeImage((int)($w * $ratio), (int)($h * $ratio), \Imagick::FILTER_LANCZOS, 1);
                     }
-
+                    // Extra downscale kualitas jika masih besar >1.5MB
                     if ($ext === 'jpg' || $ext === 'jpeg') {
                         $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
                         $imagick->setImageCompressionQuality(82);
+                        if ($size > 1500 * 1024) {
+                            $imagick->setImageCompressionQuality(75);
+                        }
                     } elseif ($ext === 'webp') {
-                        $imagick->setImageCompressionQuality(82);
+                        $imagick->setImageCompressionQuality($size > 1500 * 1024 ? 72 : 82);
                     } elseif ($ext === 'png') {
                         $imagick->setOption('png:compression-level', '9');
                         $imagick->setOption('png:compression-filter', '5');
                         if (($w * $h) > (1280 * 1280)) {
-                            $imagick->quantizeImage(256, \Imagick::COLORSPACE_RGB, 0, false, false);
+                            $imagick->quantizeImage(256, \Imagick::COLORspace_RGB, 0, false, false);
                         }
                     }
 
                     if (!$imagick->writeImage($savePath)) {
                         throw new Exception('Imagick failed to write image.');
                     }
+
+                    $imageResolutions[] = [$imagick->getImageWidth(), $imagick->getImageHeight()];
 
                     $imagick->clear();
                     $imagick->destroy();
@@ -435,10 +492,15 @@ class SupportClientChatController extends Controller
             }
         }
 
-        $this->pushChatToFirebase($chat);
+        $this->pushChatToFirebase($chat, $imageResolutions);
+        $tickClass = ClientTicket::findOrFail($ticketId);
+        $user = Client::findOrFail($tickClass->userID);
+        
+        //Email Notification
+        Mail::to($user->email)->send(new NotificationMail($user->name, $tickClass->title, $ticketId, $message, $attCount));
 
         // WhatsApp notification: support -> client
-        try {
+        /*try {
             $ticket = DB::table('clientTickets')
                 ->join('clients as c','clientTickets.userID','=','c.id')
                 ->select('clientTickets.id','clientTickets.title','clientTickets.status','c.country_code as country_code','c.phone_number as client_phone','c.name as client_name')
@@ -454,7 +516,7 @@ class SupportClientChatController extends Controller
                     'chatType' => 'support_to_client'
                 ]);
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {}*/
 
         return response()->json([
             'success' => true,
@@ -462,14 +524,14 @@ class SupportClientChatController extends Controller
         ]);
     }
 
-    private function pushChatToFirebase(ClientChat $chat)
+    private function pushChatToFirebase(ClientChat $chat, $imageResolutions)
     {   
         //Database URI is used since this machine is using an old version of firebase and always defaults to the old link.
         $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials.file')))->withDatabaseUri(config('firebase.credentials.url')); 
         $db = $factory->createDatabase();
 
         $ticketId = $chat->ticketID;
-        $attachments = $chat->attachments->map(function ($a) {
+        $attachments = $chat->attachments->values()->map(function ($a, $index) use ($imageResolutions) {
             $url = 'chat_attachments/';
             $isImage = in_array(strtolower($a->fileExtension), ['jpg', 'jpeg', 'png', 'webp']);
             if ($isImage) {
@@ -480,7 +542,8 @@ class SupportClientChatController extends Controller
                 'name' => $a->fileName,
                 'extension' => $a->fileExtension,
                 'url' => $a->filePath, //for now. find a way to put in storage.
-                'size' => $a->fileSize
+                'size' => $a->fileSize,
+                'resolution' => $imageResolutions[$index] ?? [0, 0]
             ];
         });
 
@@ -506,6 +569,11 @@ class SupportClientChatController extends Controller
 
         $ticket->status = "SELESAI";
         $ticket->save();
+
+        $user = Client::findOrFail($ticket->userID);
+
+        //Email Notification
+        Mail::to($user->email)->send(new CompleteMail($user->name, $ticket->title, $id));
         $this->changeToResolveToFirebase($ticket);
         return back();
     }

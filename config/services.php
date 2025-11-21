@@ -35,8 +35,8 @@ return [
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'phone_id' => env('WHATSAPP_PHONE_ID'), // NOT BUSINESS PHONE ID
         'auth_template' => env('WHATSAPP_AUTH_TEMPLATE_NAME'),
-    'notif_template' => env('WHATSAPP_NOTIFICATION_TEMPLATE_NAME'),
-    'microservice_url' => env('WHATSAPP_MICROSERVICE_URL', 'http://localhost:4001')
+        'notif_template' => env('WHATSAPP_NOTIFICATION_TEMPLATE_NAME'),
+        'microservice_url' => env('WHATSAPP_MICROSERVICE_URL', 'http://localhost:4001')
     ],
 
 ];

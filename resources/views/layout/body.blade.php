@@ -153,3 +153,4 @@ function showAlert() {
   </body>
 </html>
 
+@include('layout.session')

@@ -102,6 +102,7 @@
         const ext = getExt(f.name);
         if (!allowedImages.includes(ext)) return false;
         if (f.size > maxSize) return false;
+        if (f.name.length > 191) return false;
 
         const sig = await getFileSignature(f);
 

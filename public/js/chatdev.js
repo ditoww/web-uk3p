@@ -231,29 +231,45 @@ document.getElementById('chat-form').addEventListener('submit', function (event)
 });
 
 
-document.addEventListener('DOMContentLoaded', function () {
+/*document.addEventListener('DOMContentLoaded', function () {
     validateInputs();
-    const chatContents = document.getElementsByClassName("message")
+    const chatContents = document.getElementsByClassName("message");
 
-    function escapeHTML(str) { //XSS PROTECTION
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    function escapeHTML(str) { // XSS PROTECTION
+        return str.replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/"/g, "&quot;")
+                  .replace(/'/g, "&#039;");
     }
 
     function linkify(text) {
         const urlRegex = /((https?:\/\/)[^\s]+)/g;
-        return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" onmouseover="text-decoration: underline;">$1</a>');
+        return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
     }
 
     for (let i = 0; i < chatContents.length; i++) {
         const div = chatContents[i];
-        const rawText = div.textContent || ''; //Add an empty string if null, innerHTML adds duplicate <br>
-        const escapedText = escapeHTML(rawText);
-        const trimmedText = escapedText.replace(/^\n+/, '').replace(/\n+$/, '');
-        const withBreaks = trimmedText.replace(/\n/g, '<br>');
-        const linkifiedText = linkify(withBreaks);
-        div.innerHTML = linkifiedText;
+
+        let rawText = div.textContent || "";
+
+        // 1️⃣ Escape HTML first
+        let safe = escapeHTML(rawText);
+
+        // 2️⃣ Remove ALL leading + trailing newlines
+        safe = safe.replace(/^\n+|\n+$/g, "");
+
+        // 3️⃣ Only convert newlines that are in the middle of text
+        safe = safe.replace(/\n/g, "<br>");
+
+        // 4️⃣ Convert URLs AFTER <br> insertion, but NEVER add <br> after a link
+        safe = safe.replace(/(https?:\/\/[^\s<]+)/g, (match) => {
+            return `<a href="${match}" target="_blank" rel="noopener noreferrer">${match}</a>`;
+        });
+
+        div.innerHTML = safe;
     }
-});
+})*/
 
 document.querySelectorAll('button').forEach(btn => {
   btn.addEventListener('click', function () {
@@ -286,12 +302,23 @@ function linkify(text) {
 function linkifyMessage(messageDiv) {
   const messageElements = messageDiv.querySelectorAll('.message');
   messageElements.forEach(element => {
-    const rawText = element.textContent || '';
+    /*const rawText = element.textContent || '';
     const escapedText = escapeHTML(rawText);
     const trimmedText = escapedText.replace(/^\n+/, '').replace(/\n+$/, '');
     const withBreaks = trimmedText.replace(/\n/g, '<br>');
     const linkifiedText = linkify(withBreaks);
-    element.innerHTML = linkifiedText;
+    element.innerHTML = linkifiedText;*/
+
+    let text = element.textContent || "";
+
+      text = text.replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/^\n+|\n+$/g, "")
+                  .replace(/\n/g, "<br>")
+                  .replace(/(https?:\/\/[^\s<]+)/g, m => `<a href="${m}" target="_blank" rel="noopener">${m}</a>`);
+
+      element.innerHTML = text;
   });
 }
 

@@ -118,12 +118,20 @@
       <td class="p-3">{{$p->username}}</td>
       <td>{{$p->name}}</td>
       <td>
+        {{--
         @if($p->status === 'active')
           <span class="badge rounded-pill" style="background-color: #d2f4e8; color: #1f7f5c; padding: 6px 12px; font-weight: 600;">Active</span>
         @elseif($p->status === 'Away')
           <span class="badge rounded-pill" style="background-color: #fef3c7; color: #92400e; padding: 6px 12px; font-weight: 600;">Away</span>
         @else
           <span class="badge rounded-pill" style="background-color: #e0e0e0; color: #333; padding: 6px 12px; font-weight: 600;">{{$p->status}}</span>
+        @endif
+        --}}
+
+        @if(Cache::has('user-online-' . $p->id))
+          <span class="badge rounded-pill" style="background-color: #d2f4e8; color: #1f7f5c; padding: 6px 12px; font-weight: 600;">Active</span>
+        @else
+          <span class="badge rounded-pill" style="background-color: #fef3c7; color: #92400e; padding: 6px 12px; font-weight: 600;">Away</span>
         @endif
       </td>
       <td>{{ \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
@@ -168,7 +176,7 @@
                     <div class="modal fade" id="tambahModal" tabindex="-1" aria-hidden="true">
                       <div class="modal-dialog modal-lg" role="document">
                         <div class="modal-content">
-                          <form method="POST" id="form-form" action="/admin/support/tambah-data" enctype="multipart/form-data" autocomplete="off">
+                          <form id="form-form" method="POST" action="/admin/support/tambah-data" enctype="multipart/form-data" autocomplete="off">
                             @csrf
                             <div class="modal-header">
                               <h3 class="modal-title fw-bold" id="exampleModalLabel3">Tambah Akun</h3>
@@ -449,6 +457,7 @@ async function allowedIMG(f){
   const ext = getExt(f.name);
   if (!allowedImages.includes(ext)) return false;
   if (f.size > maxSize) return false;
+  if (f.name.length > 191) return false;
 
   const sig = await getFileSignature(f);
 
@@ -747,24 +756,19 @@ $("#copyTable").on('click', function() {
       data: fd,
       processData: false,
       contentType: false,
-      headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-      success: function(resp) {
-        if (typeof form.requestSubmit === 'function') {
-          form.requestSubmit();
-        } else {
-          HTMLFormElement.prototype.submit.call(form);
-        }
+      success: function() {
+        form.submit(); // lanjut submit normal
       },
       error: function(xhr) {
         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-          showAjaxErrorsSpv(xhr.responseJSON.errors);
+          showAjaxErrorsSupport(xhr.responseJSON.errors);
         } else {
           console.error('Validasi AJAX gagal:', xhr);
-        } 
+        }
       },
       complete: function() {
         btn.disabled = false;
-        btn.innerHTML = btn.dataset.prevText || 'Tambah Data';
+        btn.innerHTML = 'Tambah Data';
       }
     });
   }

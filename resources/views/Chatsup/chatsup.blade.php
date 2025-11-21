@@ -3,6 +3,7 @@
 @section('title', 'Chat Ticket')
 
 @section('styles')
+<script src="/js/format-chat.js" defer></script>
 <style>
   .chat-body {
     padding: 20px;
@@ -510,7 +511,7 @@
                         @endphp
                         @if($att['type'] === 'image')
                         <div class="mt-2">
-                          <img src="{{ route('images.viewDev', ['filename' => $att['name']]) }}" alt="{{ $clientName }}" class="img-thumbnail rounded shadow-sm chat-image-clickable" style="width: {{ $att['width'] ?? 250 }}px; height: {{ $att['height'] ?? 200 }}px; object-fit: cover;">
+                          <img src="{{ route('images.viewDev', ['filename' => $att['name']]) }}" alt="{{ $clientName }}" class="img-thumbnail rounded shadow-sm chat-image-clickable" style="width: {{ $att['width'] ?? 32 }}px; height: {{ $att['height'] ?? 32 }}px; object-fit: cover;">
                         </div>
                         @else
                           <div class="file-box mt-2 p-2 rounded bg-light border d-inline-block">
@@ -740,6 +741,7 @@
     const ext = getExt(f.name);
     if (!allowedImages.includes(ext)) return false;
     if (f.size > maxSize) return false;
+    if (f.name.length > 191) return false;
 
     const sig = await getFileSignature(f);
 
@@ -760,6 +762,7 @@
     const ext = getExt(f.name);
     if (!allowedAtts.includes(ext)) return false;
     if (f.size > maxSize) return false;
+    if (f.name.length > 191) return false;
 
     const sig = await getFileSignature(f);
 

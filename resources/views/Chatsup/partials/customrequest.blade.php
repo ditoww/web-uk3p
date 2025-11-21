@@ -62,7 +62,7 @@
         } 
 
         const getSrc = (att) => {
-            if (temp && att.preview) {
+            if (att.preview) {
                 return att.preview;
             }
 
@@ -91,11 +91,26 @@
             const isImage = allowedImages.includes(ext);
             
             if (isImage) {
-                html += `
-                    <div class="mt-2 ${isOwnMessage ? 'text-end' : ''}">
-                        <img src="${getSrc(attachment)}" class="img-thumbnail rounded shadow-sm chat-image-clickable" alt="${formatName(attachment.name, isOwnMessage)}" style="max-width: 250px; max-height: 200px; object-fit: cover;">
-                    </div>
-                `;
+                if (temp)
+                    html += `
+                        <div class="mt-2 ${isOwnMessage ? 'text-end' : ''}">
+                            <img src="${getSrc(attachment)}" class="img-thumbnail rounded shadow-sm chat-image-clickable" alt="${formatName(attachment.name, isOwnMessage)}" style="max-width: 250px; max-height: 200px; object-fit: cover;">
+                        </div>
+                    `;
+                else {
+                    const maxW = 250;
+                    const maxH = 200;
+                    const width = attachment.resolution[0];
+                    const height= attachment.resolution[1];
+                    const ratio = Math.min(maxW/width, maxH/height, 1);
+                    const w = Math.floor(width * ratio);
+                    const h = Math.floor(height * ratio);
+                    html += `
+                        <div class="mt-2 ${isOwnMessage ? 'text-end' : ''}">
+                            <img src="${getSrc(attachment)}" class="img-thumbnail rounded shadow-sm chat-image-clickable" alt="${formatName(attachment.name, isOwnMessage)}" style="width: ${w}px; height: ${h}px; object-fit: cover;">
+                        </div>
+                    `;
+                }
             } else {
                 const fileIcon = getFileIcon(ext);
                 const fileSize = attachment.size ? formatFileSize(attachment.size) : 'Size N/A'

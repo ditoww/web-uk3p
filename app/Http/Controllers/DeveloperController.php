@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SupportTicket; // Pastikan model ini sudah di-import
+use App\Models\supportticket; // Pastikan model ini sudah di-import
 use App\Models\DevChat;
 use App\Models\DevRole;
 use Illuminate\Http\Request;

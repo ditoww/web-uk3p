@@ -107,12 +107,20 @@
       <td class="p-3">{{$p->username}}</td>
       <td>{{$p->name}}</td>
       <td>
+        {{--
         @if($p->status === 'active')
           <span class="badge rounded-pill" style="background-color: #d2f4e8; color: #1f7f5c; padding: 6px 12px; font-weight: 600;">Active</span>
         @elseif($p->status === 'Away')
           <span class="badge rounded-pill" style="background-color: #fef3c7; color: #92400e; padding: 6px 12px; font-weight: 600;">Away</span>
         @else
           <span class="badge rounded-pill" style="background-color: #e0e0e0; color: #333; padding: 6px 12px; font-weight: 600;">{{$p->status}}</span>
+        @endif
+        --}}
+
+        @if(Cache::has('user-online-' . $p->id))
+          <span class="badge rounded-pill" style="background-color: #d2f4e8; color: #1f7f5c; padding: 6px 12px; font-weight: 600;">Active</span>
+        @else
+          <span class="badge rounded-pill" style="background-color: #fef3c7; color: #92400e; padding: 6px 12px; font-weight: 600;">Away</span>
         @endif
       </td>
       <td>{{ \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
@@ -438,6 +446,7 @@ async function allowedIMG(f){
   const ext = getExt(f.name);
   if (!allowedImages.includes(ext)) return false;
   if (f.size > maxSize) return false;
+  if (f.name.length > 191) return false;
 
   const sig = await getFileSignature(f);
 

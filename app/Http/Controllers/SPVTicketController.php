@@ -70,7 +70,7 @@ class SPVTicketController extends Controller
             'resolved' => $rawTickets->where('status', 'Resolved')->count(),
         ];
 
-        $roles = DevRole::all();
+        $roles = DevRole::where('isDeleted', 0)->get();
 
         // Mapping ke struktur sebelumnya yang dipakai view (code, role, status, title, user, submitted_at)
         $tickets = $rawTickets->map(function ($t) {

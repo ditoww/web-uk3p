@@ -36,7 +36,10 @@
         const closedRef = ref(db, 'tickets/status/closed');
 
         onChildAdded(ticketRef, async (snapshot) => {
-            const id = snapshot.val().user_id;
+            const data = snapshot.val();
+             if (!data) return;
+
+            const id = data.user_id;
             if (String(user.id) === String(id)) {
                 getTicket(id);
             } else {
@@ -46,16 +49,12 @@
         });
 
         onChildAdded(closedRef, (snapshot) => {
-            if (snapshot.val().status === "DITUTUP")
-                const ticket = document.getElementById('tc-' + snapshot.val().id);
+            const data = snapshot.val();
+            if (!data) return;
+
+            if (data.status === "DITUTUP") {
+                const ticket = document.getElementById('tc-' + data.id);
                 if (ticket) ticket.remove();
-            if (snapshot.val().status === "SEDANG DIPROSES") {
-                const badge = document.getElementById('tc-' + snapshot.val().id).querySelector('.status-badge');
-                if (badge) {
-                    badge.classList.remove('status-open');
-                    badge.classList.add('status-progress');
-                    badge.textContent = "In Progress";
-                }
             }
         })
     });
@@ -91,13 +90,20 @@
 
     function getTicket(t) {
         const ticket = document.querySelector('#tc-' + t);
-        const hyp = "/Support/clientchat?ticket=" + t;
+        const hyp = "/support/clientchat?ticket=" + t;
         const menu = `
         <a href="${hyp}" 
             class="btn btn-sm btn-outline-primary">
             <i class="bi bi-chat-dots me-1"></i>Chat
         </a>
         `;
+
+        const badge = ticket.querySelector('.status-badge');
+        if (badge) {
+            badge.classList.remove('status-open');
+            badge.classList.add('status-progress');
+            badge.textContent = "In Progress";
+        }
 
         ticket.querySelector('#button-menu').innerHTML = menu;
     }
