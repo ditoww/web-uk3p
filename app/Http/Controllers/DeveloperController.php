@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\supportticket; // Pastikan model ini sudah di-import
+use App\Models\SupportTicket; // Pastikan model ini sudah di-import
 use App\Models\DevChat;
 use App\Models\DevRole;
 use Illuminate\Http\Request;
@@ -42,7 +42,7 @@ class DeveloperController extends Controller
             ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
             ->orderBy('devTickets.created_at', 'ASC')
             ->get();
-        
+
         $roles = DevRole::where('isDeleted', 0)->get();
 
         // Mengirimkan data tiket yang sudah di-join ke view
@@ -113,6 +113,6 @@ class DeveloperController extends Controller
 
         // Redirect ke halaman chat developer dengan ticket yang baru diklaim
         return redirect()->route('Chatdev.chatdev', ['ticket' => $id])
-                         ->with('success', 'Ticket berhasil diklaim dan status diubah menjadi In Progress.');
+            ->with('success', 'Ticket berhasil diklaim dan status diubah menjadi In Progress.');
     }
 }
