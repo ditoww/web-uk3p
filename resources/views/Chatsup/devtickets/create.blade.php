@@ -2,8 +2,19 @@
 
 @section('title', 'Buat Dev Ticket')
 
+@section('styles')
+  <style>
+    .scroll {
+      overflow-x: hidden;
+      max-height: 100vh;
+      overflow-y: auto;
+      white-space: nowrap;
+    }
+  </style>
+@endsection
+
 @section('content')
-<div class="container py-4">
+<div class="container scroll py-4">
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h4 class="mb-0"><i class="bi bi-journal-plus me-2"></i>Buat Dev Ticket</h4>
     <div class="d-flex gap-2">

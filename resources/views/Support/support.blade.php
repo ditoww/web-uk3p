@@ -4,6 +4,14 @@
 
 @section('styles')
 <style>
+  .ticket-scroll {
+    overflow-x: hidden;
+    height: 100vh;
+    overflow-y: auto;
+    white-space: nowrap;
+    padding-bottom: 8px;
+  }
+
   .ticket-card {
     border: 1px solid #dee2e6;
     border-radius: 8px;
@@ -69,6 +77,7 @@
           <p class="text-muted">Anda belum mempunyai tiket.</p>
         </div>
       @else
+      <div class="ticket-scroll">
         <div class="row">
           @foreach($tickets as $ticket)
             @php
@@ -127,6 +136,7 @@
             </div>
           @endforeach
         </div>
+      </div>
       @endif
     </div>
   </div>
