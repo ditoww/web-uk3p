@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class UserController extends Controller
 {
-    public function keepAlive()
+    public function keepAlive(Request $request)
     {
         if (Auth::check()) {
             $exp = Carbon::now()->addSeconds(15); 

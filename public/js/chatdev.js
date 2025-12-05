@@ -1,6 +1,6 @@
 window.addEventListener('load', async function () {
 
-  console.log('[chatdev.js] running...');
+  //console.log('[chatdev.js] running...');
 
   // Auto-resize textarea (Enter handling moved to realtime-chat.js)
   const textarea = document.getElementById('messageTextarea');
@@ -133,7 +133,7 @@ if (imgInput) {
 
       if (await allowedIMG(file)) {
         selectedImages.push(file);
-        console.log(selectedImages);
+        //console.log(selectedImages);
         added = true;
       }
     }
@@ -222,7 +222,7 @@ document.getElementById('chat-form').addEventListener('submit', function (event)
   selectedAtts.forEach(file => dtAtt.items.add(file));
   att.files = dtAtt.files;
 
-  console.log('Sending images:', selectedImages.length);
+  //console.log('Sending images:', selectedImages.length);
 
   // Clear raw input values to avoid false duplicates on next change
   // Turns out this only works if realtime or something. You will need a custom request for that. Uncomment after that is created.

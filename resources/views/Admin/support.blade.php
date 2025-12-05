@@ -71,6 +71,18 @@
     .invalid-style {
       border-color: rgb(234, 84, 85);
     }
+    /* Disables input number UI */
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
 </style>
 
 <div class="card">
@@ -186,12 +198,12 @@
                               <div class="row">
                                 <hr class="my-0 mb-4" />
                                 <div class="d-flex align-items-start align-items-sm-center mb-3 gap-4">
-                                  <img src="{{ asset('assetsadmin/img/avatars/default.png') }}" alt="user-avatar" name="upload" class="d-block w-px-100 h-px-100 rounded-circle" style="object-fit: cover;" id="uploadedAvatar" />
+                                  <img src="{{ asset('assetsadmin/img/avatars/default.png') }}" alt="user-avatar" class="d-block w-px-100 h-px-100 rounded-circle" style="object-fit: cover;" id="uploadedAvatar" />
                                   <div class="button-wrapper">
                                     <label for="upload" class="btn btn-primary me-2 mb-3" tabindex="0">
                                       <span class="d-none d-sm-block">Upload Foto Baru</span>
                                       <i class="ti ti-upload d-block d-sm-none"></i>
-                                      <input type="file" id="upload" name="upload" class="account-file-input" hidden accept=".png,.jpeg,.jpg" />
+                                      <input type="file" id="upload" name="upload" class="account-file-input" data-stopper="not active" hidden accept=".png,.jpeg,.jpg" />
                                     </label>
                                     <button type="button" class="btn btn-label-secondary account-image-reset mb-3">
                                       <i class="ti ti-refresh-dot d-block d-sm-none"></i>
@@ -199,17 +211,20 @@
                                     </button>
                                     <div class="text-muted">Diperbolehkan bentuk JPG atau PNG. Maksimal 5MB</div>
                                     @error('upload')
-  <div style="color: red; font-size: 13px;">{{ $message }}</div>
-@enderror
-<div id="error-upload" class="text-danger small"></div>
+                                      <div id="byp-upload" style="color: red; font-size: 13px;">{{ $message }}</div>
+                                    @enderror
+                                    <div id="error-upload" class="text-danger small"></div>
                                   </div>
                                 </div>
 
                                 <!-- Username -->
                                 <div class="col mb-3">
                                   <label for="usernameField" class="form-label">Username</label>
-                                  <input type="text" id="usernameField" name="username" class="form-control" placeholder="SupOne" oninput="validateUserInput(this)" />
+                                  <input type="text" id="usernameField" name="username" class="form-control @error('username') is-invalid @enderror" placeholder="SupOne" oninput="validateUserInput(this)" />
                                   <span id="error-message-user" style="color: red;"></span>
+                                  @error('username')
+                                    <div id="byp-username" style="color: red; font-size: 13px;">{{ $message }}</div>
+                                  @enderror
                                   <div id="error-username" class="text-danger small"></div>
                                 </div>
                               </div>
@@ -218,8 +233,11 @@
                               <div class="row g-2 mb-3">
                                 <div class="col mb-0">
                                   <label for="inputHuruf" class="form-label">Nama</label>
-                                  <input type="text" id="inputHuruf" name="nama" class="form-control" placeholder="Support One" oninput="validateInput(this)" />
+                                  <input type="text" id="inputHuruf" name="nama" class="form-control @error('nama') is-invalid @enderror" placeholder="Support One" oninput="validateInput(this)" />
                                   <span id="error-message" style="color: red;"></span>
+                                   @error('nama')
+                                    <div id="byp-nama" style="color: red; font-size: 13px;">{{ $message }}</div>
+                                  @enderror
                                   <div id="error-nama" class="text-danger small"></div>
                                 </div>
                               </div>
@@ -228,15 +246,21 @@
                               <div class="row g-2 mb-3">
                                 <div class="col mb-0">
                                   <label for="emailInput" class="form-label">Email (Opsional)</label>
-                                  <input type="text" id="emailInput" name="email" class="form-control" placeholder="example@mail.com" />
+                                  <input type="text" id="emailInput" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="example@mail.com" />
+                                  @error('email')
+                                    <div id="byp-email" style="color: red; font-size: 13px;">{{ $message }}</div>
+                                  @enderror
                                   <div id="error-email" class="text-danger small"></div>
                                 </div>
                                 <div class="col mb-0">
                                   <label for="phoneNumber" class="form-label">No HP (Opsional)</label>
                                   <div class="input-group input-group-merge">
-                                    <span class="input-group-text">+62</span>
-                                    <input type="number" id="phoneNumber" name="nohp" class="form-control" placeholder="81234567890" />
+                                    <span class="input-group-text @error('nohp') is-invalid @enderror">+62</span>
+                                    <input type="number" id="phoneNumber" name="nohp" class="form-control @error('nohp') is-invalid @enderror" placeholder="81234567890" />
                                   </div>
+                                  @error('nohp')
+                                    <div id="byp-nohp" style="color: red; font-size: 13px;">{{ $message }}</div>
+                                  @enderror
                                   <div id="error-nohp" class="text-danger small"></div>
                                 </div>
                               </div>
@@ -250,9 +274,12 @@
                                   <div class="form-password-toggle">
                                     <label class="form-label" for="basic-default-password12">Password</label>
                                     <div class="input-group">
-                                      <input type="password" name="pass" class="form-control" id="basic-default-password12" placeholder="••••••••••••" autocomplete="new-password" />
+                                      <input type="password" name="pass" class="form-control @error('pass') is-invalid @enderror" id="basic-default-password12" placeholder="••••••••••••" autocomplete="new-password" />
                                       <span id="basic-default-password2" class="input-group-text cursor-pointer"><i class="ti ti-eye-off"></i></span>
                                     </div>
+                                    @error('pass')
+                                      <div id="byp-pass" style="color: red; font-size: 13px;">{{ $message }}</div>
+                                    @enderror
                                     <div id="error-pass" class="text-danger small"></div>
                                   </div>
                                 </div>
@@ -530,6 +557,7 @@ if (accountUserImage) {
   };*/
 
   fileInput.addEventListener('change', async function (e) {
+    if (fileInput.dataset.stopper === "active") return;
     const file = e.target.files && e.target.files[0];
     await handleFile(fileInput, file);
     if (lastValidFile) {
@@ -538,6 +566,7 @@ if (accountUserImage) {
   });
 
   resetFileInput.onclick = () => {
+    if (fileInput.dataset.stopper === "active") return;
     fileInput.value = '';
     accountUserImage.src = resetImage;
   };
@@ -695,7 +724,10 @@ $("#copyTable").on('click', function() {
 
 
 <script>
+  const fields = ['username','nama','email','nohp','role','pass','upload'];
+  const fileInput = document.querySelector('.account-file-input');
   function clearAjaxErrorsSupport() {
+    fileInput.dataset.stopper = "active";
     const map = {
       username: { input: '[name="username"]', holder: '#error-username' },
       nama:     { input: '[name="nama"]',     holder: '#error-nama' },
@@ -707,8 +739,14 @@ $("#copyTable").on('click', function() {
     Object.values(map).forEach(({input, holder}) => {
       const el = document.querySelector(input);
       const h  = document.querySelector(holder);
+      const byp = document.getElementById(`byp-${name}`);
+      document.getElementById('error-message').textContent = '';
       if (h) h.textContent = '';
-      if (el) el.classList.remove('is-invalid');
+      if (byp) byp.textContent = '';
+      if (el) {
+        el.classList.remove('is-invalid');
+        el.readOnly = true;
+      }
     });
     // hilangkan style invalid untuk prefix +62
     const addon = document.querySelector('[name="nohp"]')?.closest('.input-group')?.querySelector('.input-group-text');
@@ -716,6 +754,7 @@ $("#copyTable").on('click', function() {
   }
 
   function showAjaxErrorsSupport(errors) {
+    fileInput.dataset.stopper = "not active";
     const map = {
       username: { input: '[name="username"]', holder: '#error-username' },
       nama:     { input: '[name="nama"]',     holder: '#error-nama' },
@@ -735,6 +774,11 @@ $("#copyTable").on('click', function() {
         const addon = el.closest('.input-group')?.querySelector('.input-group-text');
         if (addon) addon.classList.add('invalid-style');
       }
+    });
+    fields.forEach(function(name){
+      const input = document.querySelector(`[name="${name}"]`);
+      if (input) 
+        input.readOnly = false;
     });
   }
 
@@ -757,9 +801,14 @@ $("#copyTable").on('click', function() {
       processData: false,
       contentType: false,
       success: function() {
-        form.submit(); // lanjut submit normal
+        if (typeof form.requestSubmit === 'function') {
+          form.requestSubmit();
+        } else {
+          HTMLFormElement.prototype.submit.call(form);
+        }
       },
       error: function(xhr) {
+        btn.disabled = false;
         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
           showAjaxErrorsSupport(xhr.responseJSON.errors);
         } else {
@@ -767,7 +816,6 @@ $("#copyTable").on('click', function() {
         }
       },
       complete: function() {
-        btn.disabled = false;
         btn.innerHTML = 'Tambah Data';
       }
     });

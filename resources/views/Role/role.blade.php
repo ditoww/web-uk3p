@@ -176,7 +176,10 @@
       const input = mainForm.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
       if (span) span.textContent = '';
-      if (input) input.classList.remove('is-invalid');
+      if (input) {
+        input.classList.remove('is-invalid');
+        input.readOnly = true;
+      }
     });
   }
 
@@ -185,7 +188,10 @@
       const input = mainForm.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
       if (span) span.textContent = errors[name][0];
-      if (input) input.classList.add('is-invalid');
+      if (input) {
+        input.classList.add('is-invalid');
+        input.readOnly = false;
+      }
     });
   }
 
@@ -196,7 +202,10 @@
       const input = updateForm.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-update-${id}-${name}`);
       if (span) span.textContent = '';
-      if (input) input.classList.remove('is-invalid');
+      if (input) {
+        input.classList.remove('is-invalid');
+        input.readOnly = true;
+      }
     });
   }
 
@@ -206,7 +215,10 @@
       const input = updateForm.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-update-${id}-${name}`);
       if (span) span.textContent = errors[name][0];
-      if (input) input.classList.add('is-invalid');
+      if (input) {
+        input.classList.add('is-invalid');
+        input.readOnly = false;
+      }
     });
   }
 
@@ -236,6 +248,7 @@
         }
       },
       error: function(xhr) {
+        btn.disabled = false;
         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
           showAjaxErrors(xhr.responseJSON.errors);
         } else {
@@ -243,7 +256,6 @@
         }
       },
       complete: function() {
-        btn.disabled = false;
         btn.innerHTML = 'Tambah';
       }
     });
@@ -275,6 +287,7 @@
         }
       },
       error: function(xhr) {
+        btn.disabled = false;
         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
           showAjaxErrorsUpdate(xhr.responseJSON.errors, id);
         } else {
@@ -282,7 +295,6 @@
         }
       },
       complete: function() {
-        btn.disabled = false;
         btn.innerHTML = 'Simpan';
       }
     });

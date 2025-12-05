@@ -58,7 +58,19 @@
     .invalid-style {
       border-color: rgb(234, 84, 85);
     }
-    
+
+    /* Disables input number UI */
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
     </style>
 
 
@@ -182,7 +194,7 @@
                                   <label for="upload" class="btn btn-primary me-2 mb-3" tabindex="0">
                                     <span class="d-none d-sm-block">Upload Foto Baru</span>
                                     <i class="ti ti-upload d-block d-sm-none"></i>
-                                    <input type="file" id="upload" name="upload" class="account-file-input" hidden accept=".png,.jpeg,.jpg" />
+                                    <input type="file" id="upload" name="upload" class="account-file-input" data-stopper="not active" hidden accept=".png,.jpeg,.jpg" />
                                   </label>
                                   <button type="button" class="btn btn-label-secondary account-image-reset mb-3">
                                     <i class="ti ti-refresh-dot d-block d-sm-none"></i>
@@ -190,9 +202,9 @@
                                   </button>
                                   <div class="text-muted">Diperbolehkan bentuk JPG atau PNG. Maksimal 5MB</div>
                                   @error('upload')
-  <div style="color: red; font-size: 13px;">{{ $message }}</div>
-@enderror
-<div id="err-upload" class="text-danger small"></div>
+                                    <div id="byp-upload" style="color: red; font-size: 13px;">{{ $message }}</div>
+                                  @enderror
+                                  <div id="err-upload" class="text-danger small"></div>
                                 </div>
                               </div>
 
@@ -202,9 +214,9 @@
                                 <input type="text" name="username" oninput="validateUserInput(this)" class="form-control @error('username') is-invalid @enderror" placeholder="AdminOne" />
                                 <span id="error-message-user" style="color: red;"></span>
                                 @error('username')
-  <span style="color: red; font-size: 13px;">{{ $message }}</span>
-@enderror 
-<span id="err-username" class="text-danger small"></span>
+                                  <span id="byp-username" style="color: red; font-size: 13px;">{{ $message }}</span>
+                                @enderror 
+                                <span id="err-username" class="text-danger small"></span>
                               </div>
                             </div>
 
@@ -215,9 +227,9 @@
                                 <input type="text" id="inputHuruf" oninput="validateInput(this)" name="nama" class="form-control @error('nama') is-invalid @enderror" placeholder="Admin One" />
                                 <span id="error-message" style="color: red;"></span>
                                 @error('nama')
-  <span style="color: red; font-size: 13px;">{{ $message }}</span>
-@enderror
-<span id="err-nama" class="text-danger small"></span>
+                                  <span id="byp-nama" style="color: red; font-size: 13px;">{{ $message }}</span>
+                                @enderror
+                                <span id="err-nama" class="text-danger small"></span>
                               </div>
                             </div>
 
@@ -227,9 +239,9 @@
                                 <label for="emailInput" class="form-label">Email (Opsional)</label>
                                 <input type="text" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="example@mail.com" />
                                 @error('email')
-  <span style="color: red; font-size: 13px;">{{ $message }}</span>
-@enderror
-<span id="err-email" class="text-danger small"></span>
+                                  <span id="byp-email" style="color: red; font-size: 13px;">{{ $message }}</span>
+                                @enderror
+                                <span id="err-email" class="text-danger small"></span>
                               </div>
 
                               <div class="col mb-0">
@@ -239,9 +251,9 @@
                                   <input type="number" name="nohp" class="form-control @error('nohp') is-invalid @enderror" placeholder="81234567890" />
                                 </div>
                                 @error('nohp')
-  <span style="color: red; font-size: 13px;">{{ $message }}</span>
-@enderror
-<span id="err-nohp" class="text-danger small"></span>
+                                  <span id="byp-nohp" style="color: red; font-size: 13px;">{{ $message }}</span>
+                                @enderror
+                                <span id="err-nohp" class="text-danger small"></span>
                               </div>
                             </div>
 
@@ -267,9 +279,9 @@
                                     </span>
                                   </div>
                                   @error('pass')
-  <span style="color: red; font-size: 13px;">{{ $message }}</span>
-@enderror
-<span id="err-pass" class="text-danger small"></span>
+                                    <span id="byp-pass" style="color: red; font-size: 13px;">{{ $message }}</span>
+                                  @enderror
+                                  <span id="err-pass" class="text-danger small"></span>
                                 </div>
                               </div>
                             </div>
@@ -561,6 +573,7 @@ if (accountUserImage) {
   };*/
 
   fileInput.addEventListener('change', async function (e) {
+    if (fileInput.dataset.stopper === "active") return;
     const file = e.target.files && e.target.files[0];
     await handleFile(fileInput, file);
     if (lastValidFile) {
@@ -569,6 +582,7 @@ if (accountUserImage) {
   });
 
   resetFileInput.onclick = () => {
+    if (fileInput.dataset.stopper === "active") return;
     fileInput.value = '';
     accountUserImage.src = resetImage;
   };
@@ -726,19 +740,27 @@ $("#copyTable").on('click', function() {
 
 
 <script>
+  const fields = ['username','nama','email','nohp','pass','upload'];
+  const fileInput = document.querySelector('.account-file-input');
   function clearAjaxErrorsAdmin() {
-    const fields = ['username','nama','email','nohp','pass','upload'];
+    fileInput.dataset.stopper  "active";
     fields.forEach(function(name){
       const input = document.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
+      const byp = document.getElementById(`byp-${name}`);
       if (span) span.textContent = '';
-      if (input) input.classList.remove('is-invalid');
+      if (byp) byp.textContent = '';
+      if (input) {
+        input.classList.remove('is-invalid');
+        input.readOnly = true;
+      }
     });
     const nohpAddon = document.querySelector('[name="nohp"]')?.closest('.input-group')?.querySelector('.input-group-text');
     if (nohpAddon) nohpAddon.classList.remove('invalid-style');
   }
 
   function showAjaxErrorsAdmin(errors) {
+    fileInput.dataset.stopper = "not active";
     Object.keys(errors).forEach(function(name){
       const input = document.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
@@ -748,6 +770,11 @@ $("#copyTable").on('click', function() {
         const addon = input.closest('.input-group')?.querySelector('.input-group-text');
         if (addon) addon.classList.add('invalid-style');
       }
+    });
+    fields.forEach(function(name){
+      const input = document.querySelector(`[name="${name}"]`);
+      if (input) 
+        input.readOnly = false;
     });
   }
 
@@ -777,6 +804,7 @@ $("#copyTable").on('click', function() {
         }
       },
       error: function(xhr) {
+        btn.disabled = false;
         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
           showAjaxErrorsAdmin(xhr.responseJSON.errors);
         } else {
@@ -784,7 +812,6 @@ $("#copyTable").on('click', function() {
         }
       },
       complete: function() {
-        btn.disabled = false;
         btn.innerHTML = 'Tambah Data';
       }
     });

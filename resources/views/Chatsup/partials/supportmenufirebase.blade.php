@@ -40,10 +40,11 @@
              if (!data) return;
 
             const id = data.user_id;
+            const tick = data.id;
             if (String(user.id) === String(id)) {
-                getTicket(id);
+                getTicket(tick);
             } else {
-                eraseTicket(id);
+                eraseTicket(tick);
             }
             //await sendTicket(snapshot.val().id);
         });
@@ -62,7 +63,7 @@
     async function sendTicket(t) {
         const formData = new FormData();
         try {
-            const response = await fetch('/support/ticket/getTicket/'+t, {
+            const response = await fetch(`/support/ticket/getTicket/${t}`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -85,7 +86,8 @@
     }
 
     function eraseTicket(t) {
-        document.querySelector('#tc-' + t).classList.add('d-none');
+        const ticketCard = document.getElementById(`tc-${t}`);
+        ticketCard.remove();
     }
 
     function getTicket(t) {

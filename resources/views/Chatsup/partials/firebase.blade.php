@@ -69,7 +69,7 @@
     function renderAttachments(attachments, isOwnMessage, temp = false) {
         if (!attachments || attachments.length === 0) return '';
 
-        console.log(attachments);
+        //console.log(attachments);
 
         let html = '';
         let ext = '';

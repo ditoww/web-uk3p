@@ -98,8 +98,8 @@
               };
             @endphp
             
-            <div class="col-md-6 col-lg-4 mb-3">
-              <div class="ticket-card" id="tc-{{$ticket->id}}">
+            <div class="col-md-6 col-lg-4 mb-3" id="tc-{{$ticket->id}}">
+              <div class="ticket-card">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <h6 class="mb-0 fw-bold">SS-{{ \Carbon\Carbon::parse($ticket->created_at)->format('Y') }}-{{ str_pad($ticket->id, 3, '0', STR_PAD_LEFT) }}</h6>
                   <span class="status-badge {{ $statusClass }}">{{ $statusTxt }}</span>

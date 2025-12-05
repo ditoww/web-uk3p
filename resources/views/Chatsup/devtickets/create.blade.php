@@ -34,7 +34,7 @@
     <div class="alert alert-success">{{ session('success') }}</div>
   @endif
   @if($errors->any())
-    <div class="alert alert-danger">
+    <div id="byp" class="alert alert-danger">
       <ul class="mb-0">
         @foreach($errors->all() as $err)
           <li>{{ $err }}</li>
@@ -42,14 +42,17 @@
       </ul>
     </div>
   @endif
-
+  <div id="err" class="alert alert-danger d-none">
+    <ul class="mb-0">
+    </ul>
+  </div>
   <div class="card position-relative">
     <div class="card-body" style="z-index: 2;">
       <form method="POST" action="{{ route('SupportClientChat.createDevTicket') }}" enctype="multipart/form-data" id="create-dev-ticket-form">
         @csrf
 
         <!-- Hidden: akan diisi dari picker -->
-        <input type="hidden" name="client_ticket_id" id="client_ticket_id" value="{{ old('client_ticket_id', $selectedId ?? '') }}"/>
+        <input type="hidden" name="client_ticket_id" id="client_ticket_id" value="{{ old('client_ticket_id', $selectedId ?? '') }}" />
 
         <!-- Sumber Komplain -->
         <div class="mb-3">
@@ -99,13 +102,11 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Judul <span class="text-danger">*</span></label>
+          <label class="form-label">Judul Tiket <span class="text-danger">*</span></label>
           <input
             type="text"
             name="title"
             class="form-control"
-            maxlength="255"
-            required
             placeholder="Judul Ticket"
             value="{{ old('title') }}"
             oninput="validateTitleInput(this);"
@@ -119,7 +120,6 @@
             id="description"
             class="form-control"
             rows="8"
-            required
             maxlength="10000"
             placeholder="Deskripsi issue untuk developer..."
           >{{ old('description') }}</textarea>
@@ -136,7 +136,7 @@
         </div>
 
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary">
+          <button type="submit" class="btn btn-primary" onclick="validateAndSubmit(event)" id="btn-submit">
             <i class="bi bi-check2-circle me-1"></i> Buat
           </button>
           <a
@@ -222,11 +222,11 @@
     if (type === 'ticket') {
       ticketSection.style.display = '';
       roleSection.style.display = 'none';
-      if (roleSelect) roleSelect.required = false;
+      if (roleSelect) clientTicketInput.disabled = false;
     } else {
       ticketSection.style.display = 'none';
       roleSection.style.display = '';
-      if (roleSelect) roleSelect.required = true;
+      if (roleSelect) clientTicketInput.disabled = true;
       // pastikan dropdown ticket tertutup
       closeTicketPicker();
     }
@@ -390,5 +390,79 @@
     });
   }
 })();
+</script>
+<script>
+  const fileInput = document.getElementById('devTicketImageInput');
+
+  function getCaseType() {
+    var checked = document.querySelector('input[name="case_type"]:checked');
+    return checked ? checked.value : 'ticket';
+  }
+
+  function clearAjaxErrors() {
+    fileInput.readOnly = true;
+    const byp = document.getElementById('byp');
+    const err = document.querySelector('#err');
+    if (byp) byp.textContent = '';
+    if (err) {
+      err.innerHTML = "";
+      err.classList.toggle('d-none', true)
+    }
+  }
+
+  function showAjaxErrors(errors) {
+    fileInput.readOnly = false;
+    const err = document.querySelector('#err');
+    let ers = [];
+    Object.keys(errors).forEach(function(name){
+      const eria = errors[name][0];
+      ers.push(`<li>${eria}</li>`)
+    });
+    const allium = ers.join('\n');
+    if (err) {
+      err.classList.toggle('d-none', false);
+      err.innerHTML = `<ul class="mb-0">${allium}</ul>`;
+    }
+  }
+
+  function validateAndSubmit(e) {
+    e.preventDefault();
+    const form = document.getElementById('create-dev-ticket-form');
+    const btn  = document.getElementById('btn-submit');
+    clearAjaxErrors();
+
+    const fd = new FormData(form);
+    fd.append('_token', '{{ csrf_token() }}');
+    console.log(getCaseType());
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Buat';
+
+    $.ajax({
+      url: '{{ route("SupportClientChat.validateDevTicket") }}',
+      method: 'POST',
+      data: fd,
+      processData: false,
+      contentType: false,
+      success: function() {
+        if (typeof form.requestSubmit === 'function') {
+          form.requestSubmit();
+        } else {
+          HTMLFormElement.prototype.submit.call(form);
+        }
+      },
+      error: function(xhr) {
+        btn.disabled = false;
+        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+          showAjaxErrors(xhr.responseJSON.errors);
+        } else {
+          console.error('Validasi AJAX gagal:', xhr);
+        }
+      },
+      complete: function() {
+        btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Buat';
+      }
+    });
+  }
 </script>
 @endsection

@@ -30,8 +30,8 @@ class RealtimeChat {
 
     async init() {
         try {
-            console.log('Initializing RealtimeChat...');
-            console.log('Firebase DB:', this.db);
+            //console.log('Initializing RealtimeChat...');
+            //console.log('Firebase DB:', this.db);
 
             const { signInAnonymously } = await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js");
 
@@ -56,12 +56,12 @@ class RealtimeChat {
                 serverTimestamp
             };
 
-            console.log('Firebase functions loaded:', Object.keys(this.firebaseFunctions));
+            //console.log('Firebase functions loaded:', Object.keys(this.firebaseFunctions));
             if (!this.isInitialized)
             await this.sendReads(location.pathname.includes('/Support/chat'), window.initRead);
             this.initializeUnsubscribe();
             this.isInitialized = true;
-            console.log('RealtimeChat initialized for ticket:', this.ticketId);
+            //console.log('RealtimeChat initialized for ticket:', this.ticketId);
         } catch (error) {
             console.error('Failed to initialize RealtimeChat:', error);
         }
@@ -116,14 +116,14 @@ class RealtimeChat {
 
         collectionsToListen.forEach(({ key, path, ordered }) => {
             try {
-                console.log(`Setting up listener for ${key}: ${path}`);
+                //console.log(`Setting up listener for ${key}: ${path}`);
                 const ref = collection(this.db, path);
                 const q = ordered ? query(ref, orderBy("timestamp", "asc")) : ref;
 
                 const unsubscribeFn = onSnapshot(
                     q,
                     (snapshot) => {
-                        console.log(`[${key}] Snapshot received (${snapshot.docChanges().length} changes)`);
+                        //console.log(`[${key}] Snapshot received (${snapshot.docChanges().length} changes)`);
 
                         snapshot.docChanges().forEach(async (change) => {
                             const data = change.doc.data();
@@ -222,7 +222,7 @@ class RealtimeChat {
 
         this.unsubscribe = () => {
             unsubscribers.forEach((fn) => fn());
-            console.log("All listeners unsubscribed.");
+            //console.log("All listeners unsubscribed.");
         };
     }
 
@@ -522,7 +522,7 @@ class RealtimeChat {
             }
 
             const result = await response.json();
-            console.log('Message stored in database:', result);
+            //console.log('Message stored in database:', result);
             return result;
         } catch (error) {
             console.error('Error storing message in database:', error);
@@ -798,7 +798,7 @@ class RealtimeChat {
             this.unsubscribe();
         }
         this.isInitialized = false;
-        console.log('RealtimeChat destroyed');
+        //console.log('RealtimeChat destroyed');
     }
 }
 
@@ -901,7 +901,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
 
             if (isSending) {
-                console.log('Send prevented: already sending');
+                console.error('Send prevented: already sending');
                 return;
             }
 
@@ -974,7 +974,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                console.log('Sending message via real-time chat...');
+                //console.log('Sending message via real-time chat...');
                 messageTextarea.value = '';
                 attsToSend = [...selectedAtts];
                 imagesToSend = [...selectedImages];
@@ -985,10 +985,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Send message via real-time chat
                 const result = await window.realtimeChat.sendMessage(message, attachments);
-                console.log('Real-time send result:', result.success);
+                //console.log('Real-time send result:', result.success);
                 
                 if (result.success) {
-                    console.log('Storing message in database...');
+                    //console.log('Storing message in database...');
                     // Also store in database
                     const r = await window.realtimeChat.storeInDatabase(message, attsToSend, imagesToSend);
 
@@ -1045,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (result.docRef) await deleteDoc(result.docRef);
                     } catch (_) {}
                 } else {
-                    console.log('Real-time send failed, falling back to traditional submission');
+                    console.error('Real-time send failed, falling back to traditional submission');
                     // Fallback to traditional form submission
                     chatForm.submit();
                 }
@@ -1059,7 +1059,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.innerHTML = originalBtnText;
                     submitBtn.classList.remove('waiting');
                     validateInputs();
-                    console.log('Button state restored');
+                    //console.log('Button state restored');
                 };
                 
                 // Try immediate restore

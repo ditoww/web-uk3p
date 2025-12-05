@@ -216,6 +216,7 @@ Route::middleware(['support'])->group(function () {
     Route::post('/support/clientchat/store-realtime', [SupportClientChatController::class, 'storeRealtime'])->name('SupportClientChat.storeRealtime');
     Route::post('/support/clientchat/dev-ticket', [SupportClientChatController::class, 'createDevTicket'])->name('SupportClientChat.createDevTicket');
     Route::get('/support/devtickets/create', [SupportClientChatController::class, 'createDevTicketPage'])->name('SupportClientChat.createDevTicketPage');
+    Route::post('/support/devtickets/create', [SupportClientChatController::class, 'validateDevTicket'])->name('SupportClientChat.validateDevTicket');
 
     Route::get('/support/clientchat/store', [SupportClientChatController::class, 'index'])->name('SupportClientChat.storeIndex');
     Route::get('/support/clientchat/resolve/{id}', [SupportClientChatController::class, 'index'])->name('SupportClientChat.resolveIndex');

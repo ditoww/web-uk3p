@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use App\Models\ClientTicket;
 use App\Models\ClientChat;
 use App\Models\Client;
@@ -40,7 +42,22 @@ class SupportClientChatController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
 
-        $validated = $request->validate($rules);
+        $messages = [
+            'case_type.required' => 'Mohon isi jenis kasus yang Anda mau lapor.',
+            'client_ticket_id.required_if' => 'Mohon isikan nomor tiket yang dibuat oleh Client.',
+            'client_ticket_id.exists' => 'Tiket dipilih tidak diketemui di dalam database atau belum dipilih.',
+            'role_id.required_if' => 'Mohon isikan role developer yang akan menangani tiket Anda.',
+            'role_id.exists' => 'Mohon isikan role developer yang akan menangani tiket Anda.',
+            'title.required' => 'Mohon isi judul tiket tersebut.',
+            'title.string' => 'Mohon isi judul yang valid.',
+            'title.max' => 'Judul terlalu panjang. Mohon memendekkan judul tersebut.',
+            'description.required' => 'Mohon isi deskripsi permasalahan pada tiket tersebut.',
+            'description.max' => 'Deskripsi tersebut melewati batasan huruf 10000 karakter.',
+            'image.mimes'=> 'Gambar tersebut tidak menggunakan format yang dapat di-support.',
+            'image.max' => 'Ukuran maksimal gambar harus dibawah 5MB.'
+        ];
+
+        $validated = $request->validate($rules, $messages);
 
         $supportId = Auth::id();
         $title = $validated['title'];
@@ -155,6 +172,40 @@ class SupportClientChatController extends Controller
 
         return redirect()->route('Chatsup.chatsup', ["ticket_dev" => $ticketId])
             ->with('success', 'Dev ticket berhasil dibuat.');
+    }
+
+    public function validateDevTicket(Request $request) {
+        $rules = [
+            'case_type' => 'required|in:ticket,external',
+            'client_ticket_id' => 'required_if:case_type,ticket|nullable|integer|exists:clientTickets,id',
+            'role_id' => 'required_if:case_type,external|nullable|integer|exists:devRoles,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:10000',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+        ];
+
+        $messages = [
+            'case_type.required' => 'Mohon isi jenis kasus yang Anda mau lapor.',
+            'client_ticket_id.required_if' => 'Mohon isikan nomor tiket yang dibuat oleh Client.',
+            'client_ticket_id.exists' => 'Tiket dipilih tidak diketemui di dalam database atau belum dipilih.',
+            'role_id.required_if' => 'Mohon isikan role developer yang akan menangani tiket Anda.',
+            'role_id.exists' => 'Mohon isikan role developer yang akan menangani tiket Anda.',
+            'title.required' => 'Mohon isi judul tiket tersebut.',
+            'title.string' => 'Mohon isi judul yang valid.',
+            'title.max' => 'Judul terlalu panjang. Mohon memendekkan judul tersebut.',
+            'description.required' => 'Mohon isi deskripsi permasalahan pada tiket tersebut.',
+            'description.max' => 'Deskripsi tersebut melewati batasan huruf 10000 karakter.',
+            'image.mimes'=> 'Gambar tersebut tidak menggunakan format yang dapat di-support.',
+            'image.max' => 'Ukuran maksimal gambar harus dibawah 5MB.'
+        ];
+
+        $validator = \Validator::make($request->only(array_keys($rules)), $rules, $messages);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function createDevTicketPage(Request $request)

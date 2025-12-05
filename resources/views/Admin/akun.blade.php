@@ -73,6 +73,18 @@
     .invalid-style {
       border-color: rgb(234, 84, 85);
     }
+    /* Disables input number UI */
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
 </style>
 
 <div class="card">
@@ -205,7 +217,7 @@
                                     <label for="upload" class="btn btn-primary me-2 mb-3" tabindex="0">
                                       <span class="d-none d-sm-block">Upload Foto Baru</span>
                                       <i class="ti ti-upload d-block d-sm-none"></i>
-                                      <input type="file" id="upload" name="upload" class="account-file-input" hidden accept=".png,.jpeg,.jpg" />
+                                      <input type="file" id="upload" name="upload" class="account-file-input" data-stopper="not active" hidden accept=".png,.jpeg,.jpg" />
                                     </label>
                                     <button type="button" class="btn btn-label-secondary account-image-reset mb-3">
                                       <i class="ti ti-refresh-dot d-block d-sm-none"></i>
@@ -213,7 +225,7 @@
                                     </button>
                                     <div class="text-muted">Diperbolehkan bentuk JPG atau PNG. Maksimal 5MB</div>
                                     @error('upload')
-                                      <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                                      <span id="byp-upload" style="color: red; font-size: 13px;">{{ $message }}</span>
                                     @enderror
                                     <span id="err-upload" style="color: red; font-size: 13px;"></span>
                                   </div>
@@ -225,7 +237,7 @@
                                   <input type="text" name="username" oninput="validateUserInput(this)" class="form-control @error('username') is-invalid @enderror" placeholder="DevOne" />
                                   <span id="error-message-user" style="color: red;"></span>
                                   @error('username')
-                                    <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                                    <span id="byp-username" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
                                   <span id="err-username" style="color: red; font-size: 13px;"></span>
                                 </div>
@@ -238,7 +250,7 @@
                                   <input type="text" id="inputHuruf" oninput="validateInput(this)" name="nama" class="form-control @error('nama') is-invalid @enderror" placeholder="Developer One" />
                                   <span id="error-message" style="color: red;"></span>
                                   @error('nama')
-                                    <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                                    <span id="byp-nama" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
                                   <span id="err-nama" style="color: red; font-size: 13px;"></span>
                                 </div>
@@ -250,7 +262,7 @@
                                   <label for="emailInput" class="form-label">Email (Opsional)</label>
                                   <input type="text" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="example@mail.com" />
                                   @error('email')
-                                    <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                                    <span id="byp-email" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
                                   <span id="err-email" style="color: red; font-size: 13px;"></span>
                                 </div>
@@ -258,11 +270,11 @@
                                 <div class="col mb-0">
                                   <label for="phoneNumber" class="form-label">No HP (Opsional)</label>
                                   <div class="input-group input-group-merge">
-                                    <span class="input-group-text @error('email') is-invalid @enderror">+62</span>
+                                    <span class="input-group-text @error('nohp') is-invalid @enderror">+62</span>
                                     <input type="number" name="nohp" class="form-control @error('nohp') is-invalid @enderror" placeholder="81234567890" />
                                   </div>
                                   @error('nohp')
-                                    <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                                    <span id="byp-nohp" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
                                   <span id="err-nohp" style="color: red; font-size: 13px;"></span>
                                 </div>
@@ -281,7 +293,7 @@
                                     @endforeach
                                   </select>
                                   @error('role')
-                                    <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                                    <span id="byp-role" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
                                   <span id="err-role" style="color: red; font-size: 13px;"></span>
                                 </div>
@@ -306,7 +318,7 @@
                                       </span>
                                     </div>
                                   @error('pass')
-                                    <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                                    <span id="byp-pass" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
                                   <span id="err-pass" style="color: red; font-size: 13px;"></span>
                                   </div>
@@ -577,6 +589,7 @@ if (accountUserImage) {
   };*/
 
   fileInput.addEventListener('change', async function (e) {
+    if (fileInput.dataset.stopper === "active") return;
     const file = e.target.files && e.target.files[0];
     await handleFile(fileInput, file);
     if (lastValidFile) {
@@ -585,6 +598,7 @@ if (accountUserImage) {
   });
 
   resetFileInput.onclick = () => {
+    if (fileInput.dataset.stopper === "active") return;
     fileInput.value = '';
     accountUserImage.src = resetImage;
   };
@@ -753,13 +767,20 @@ $("#copyTable").on('click', function() {
                 </script>
 
 <script>
-  function clearAjaxErrors() {
-    const fields = ['username','nama','email','nohp','role','pass','upload'];
+  const fields = ['username','nama','email','nohp','role','pass','upload'];
+  const fileInput = document.querySelector('.account-file-input');
+  function clearAjaxErrors() { 
+    fileInput.dataset.stopper = "active";
     fields.forEach(function(name){
       const input = document.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
+      const byp = document.getElementById(`byp-${name}`);
       if (span) span.textContent = '';
-      if (input) input.classList.remove('is-invalid');
+      if (byp) byp.textContent = '';
+      if (input) {
+        input.classList.remove('is-invalid');
+        input.readOnly = true;
+      }
       if (name === 'nohp') {
         const addon = document.querySelector('[name="nohp"]')?.closest('.input-group')?.querySelector('.input-group-text');
         if (addon) addon.classList.remove('invalid-style');
@@ -768,6 +789,7 @@ $("#copyTable").on('click', function() {
   }
 
   function showAjaxErrors(errors) {
+    fileInput.dataset.stopper = "not active";
     Object.keys(errors).forEach(function(name){
       const input = document.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
@@ -777,6 +799,11 @@ $("#copyTable").on('click', function() {
         const addon = document.querySelector('[name="nohp"]')?.closest('.input-group')?.querySelector('.input-group-text');
         if (addon) addon.classList.add('invalid-style');
       }
+    });
+    fields.forEach(function(name){
+      const input = document.querySelector(`[name="${name}"]`);
+      if (input) 
+        input.readOnly = false;
     });
   }
 
@@ -806,6 +833,7 @@ $("#copyTable").on('click', function() {
         }
       },
       error: function(xhr) {
+        btn.disabled = false;
         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
           showAjaxErrors(xhr.responseJSON.errors);
         } else {
@@ -813,7 +841,6 @@ $("#copyTable").on('click', function() {
         }
       },
       complete: function() {
-        btn.disabled = false;
         btn.innerHTML = 'Tambah Data';
       }
     });
