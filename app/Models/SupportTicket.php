@@ -88,9 +88,11 @@ class SupportTicket extends Model
         return DB::table($this->table)->insert($data);
     }
 
-    public function deleteData($id) {
+    public function deleteData($id)
+    {
         $ticket = DevTicket::findOrFail($id);
         $ticket->isDeleted = 1;
+        $ticket->status = "Deleted";
         $ticket->save();
         return back();
     }
