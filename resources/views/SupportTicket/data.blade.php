@@ -119,6 +119,8 @@
           <span class="badge-status badge-open">Open</span>
         @elseif($status == 'closed')
           <span class="badge-status badge-closed">Closed</span>
+        @elseif($status == 'deleted')
+          <span class="badge-status badge-closed">Deleted</span>
         @else
           <span class="badge bg-secondary">Unknown</span>
         @endif
