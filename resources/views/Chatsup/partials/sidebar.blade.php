@@ -43,6 +43,15 @@
       display: none;
     }
   }
+
+  .shortable{
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
 </style>
 
 <div class="sidebar px-3">
@@ -58,7 +67,7 @@
       <a class="nav-link {{ request()->is('support/clientchat*') ? 'active' : '' }}" href="{{ route('SupportClientChat.supportclientchat') }}">
         <i class="bi bi-chat-dots me-2"></i> Chat Client
       </a>
-      <a class="nav-link {{ request()->is('support/devtickets/create') ? 'active' : '' }}" href="{{ route('SupportClientChat.createDevTicketPage') }}">
+      <a class="nav-link {{ request()->is('support/devtickets/create') ? 'active' : '' }}" href="{{ request()->is('support/clientchat*') ? route('SupportClientChat.createDevTicketPage', ['ticket_user' => request('ticket')]) : route('SupportClientChat.createDevTicketPage') }}">
         <i class="bi bi-journal-plus me-2"></i> Buat Dev Ticket
       </a>
       <a class="nav-link {{ request()->is('Support/chat*') && !request()->boolean('history') ? 'active' : '' }}" href="{{ route('Chatsup.chatsup') }}">
@@ -72,9 +81,9 @@
   <div class="user-footer d-flex align-items-center gap-2">
     <button id="profileBtn" class="btn btn-light w-100 d-flex align-items-center justify-content-start gap-2 fw-semibold">
       <img src="{{ $user->profile_picture ?? asset('assetsadmin/img/avatars/default.png') }}" class="rounded-circle profile-img" alt="Profile Picture" />
-      <span>
-        {{ $user->name }}<br>
-        <span class="text-muted text-small">{{ $user->role ?? 'Support' }}</span>
+      <span class="mx-auto">
+        <span class="shortable mx-auto">{{ $user->name }}</span>
+        <span class="shortable text-muted text-small mx-auto">{{ $user->role ?? 'Support' }}</span>
       </span>
     </button>
   </div>

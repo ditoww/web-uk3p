@@ -239,6 +239,7 @@
     font-weight: 600;
     color: #212529;
     margin-bottom: 0;
+    max-width: 240px;
   }
   .ticket-info-bar .status-badge {
     background: #e9f3ff;
@@ -313,6 +314,10 @@
     color: #1976d2;
   }
 
+  .excel-icon {
+    color: #007329;
+  }
+
  @media (max-width: 1300px) {
     .chat-history {
       display: block;
@@ -340,6 +345,16 @@
     #toggleChatHistory {
       display: none !important;
     }
+  }
+
+  .ticket-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+    max-height: calc(1.4em * 2);
   }
 
   #submitButton.disabled {
@@ -372,6 +387,25 @@
   @keyframes dotGrowing {
     0%, 80%, 100% { transform: scale(0.8); background-color: #979797;}
     40% { transform: scale(1.2); background-color: #7D7D7D;}
+  }
+
+  .meta-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .meta-line .name {
+    max-width: 128px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+  }
+
+  .meta-line .time {
+    flex-shrink: 0; 
   }
 </style>
 @endsection
@@ -426,12 +460,16 @@
         <div class="ticket-card mb-2 p-2 rounded {{ $isActive ? 'bg-light' : '' }}" id="tc-{{$ticket->id}}">
           <span class="badge {{ $statusClass }} badge-status mb-1">{{ $statusTxt }}</span>
           <div class="fw-semibold text-primary">SS-{{ \Carbon\Carbon::parse($ticket->created_at)->format('Y') }}-{{ str_pad($ticket->id, 3, '0', STR_PAD_LEFT) }}</div>
-          <div class="mb-1">{{ $ticket->title }}</div>
+          <div class="mb-1 ticket-title">{{ $ticket->title }}</div>
           @php
             $timezone = session('user_timezone', config('app.timezone'));
             $cTime = \Carbon\Carbon::parse($ticket->created_at)->timezone($timezone);
           @endphp
-          <small class="text-muted">{{ $ticket->client_name }} • {{ $cTime }}</small>
+          <small class="text-muted meta-line">
+            <span class="name">{{ $ticket->client_name }}</span>
+            <span>•</span>
+            <span class="time">{{ $cTime }}</span>
+          </small>
         </div>
       </a>
     @endforeach
@@ -449,6 +487,8 @@
           <div class="info-label">Judul</div>
           <div class="info-title">{{ $selectedTicket->title }}</div>
         </div>
+      </div>
+      <div class="client">
         <div>
           <div class="info-label">Status</div>
           <span class="text-nowrap status-badge {{ $selectedStatusClass }}">
@@ -456,8 +496,6 @@
             {{ $selectedStatusTxt }}
           </span>
         </div>
-      </div>
-      <div class="client">
         <img src="{{ 'https://ui-avatars.com/api/?name=' . urlencode($selectedTicket->client_name) }}" class="client-img" />
         <div class="client-details">
           <div class="client-name text-nowrap">{{ $selectedTicket->client_name }}</div>
@@ -612,7 +650,7 @@
           </div>
 
         <div class="d-flex gap-2 pt-1">
-          <input type="file" name="attachment[]" id="attachment" class="d-none" accept=".docx,.pdf" multiple disabled>
+          <input type="file" name="attachment[]" id="attachment" class="d-none" accept=".docx,.pdf,.xlsx" multiple disabled>
           <button type="button" class="btn btn-sm btn-outline-secondary" @if($selectedTicket->status !== 'DITUTUP') onclick="document.getElementById('attachment').click();" @endif>
             <i class="bi bi-paperclip"></i> File
           </button>
@@ -644,6 +682,7 @@
     <div class="modal-content">
       <form method="POST" action="{{ route('SupportClientChat.createDevTicket') }}" enctype="multipart/form-data">
         @csrf
+        <input type="hidden" name="case_type" value="ticket" />
         <input type="hidden" name="client_ticket_id" value="{{ $selectedTicket->id }}" />
         <div class="modal-header">
           <h5 class="modal-title"><i class="bi bi-journal-plus me-2"></i>Buat Tiket Dev</h5>
@@ -663,9 +702,16 @@
           </div>
           <span id="description-error" style="color: red; font-size: 13px; display: none;">Deskripsi tersebut terlalu panjang</span>
           <div class="mb-3">
-            <label class="form-label">Attachment Gambar (opsional)</label>
-            <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
-            <small class="text-muted">Max 5MB. JPG/PNG/WEBP.</small>
+            <label class="form-label">Attachment (opsional)</label>
+            <div class="d-flex align-items-center">
+              <input type="file" id="devTicketImageInput" name="image" accept=".jpg,.jpeg,.png,.webp,.xlsx,.docx,.pdf" class="form-control w-75"/>          
+              <div class="mx-2">
+                <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachmentBtn">
+                  <i class="bi bi-x-circle me-1"></i> Hapus
+                </button>
+              </div>
+            </div>
+            <small class="text-muted">Max 5MB. JPG/PNG/WEBP/DOCX/PDF/XLSX.</small>
           </div>
         </div>
         <div class="modal-footer">
@@ -699,7 +745,7 @@
   let selectedImages = [];
   let selectedAtts = [];
   const allowedImages = ['png', 'jpg', 'jpeg', 'webp'];
-  const allowedAtts = ['docx', 'pdf'];
+  const allowedAtts = ['docx', 'pdf','xlsx'];
   const maxSize = 10 * 1024 * 1024;
   const maxFiles = 4;
 
@@ -742,6 +788,9 @@
     }
     if (ext === "docx") { //Apparently a Docx is a zip so... extra precautions ahead!
         return await isDocx(f);
+    }
+    if (ext === "xlsx") {
+        return await isXlsx(f);
     }
 
     return false;
@@ -786,7 +835,7 @@
   const devTicketDescription = document.querySelector('#createDevTicketModal textarea');
   const devTicketSubmitBtn = document.querySelector('#createDevTicketModal button[type="submit"]');
   const devTicketInputImage = document.querySelector('#createDevTicketModal input[type="file"]')
-
+  const removeAttachmentBtn = document.getElementById('removeAttachmentBtn');
   const wordCountDisplay = document.getElementById('description-word-count');
   const descriptionError = document.getElementById('description-error');
   const charLimit = 10000;
@@ -856,7 +905,7 @@
       return;
     }
 
-    const allowed = await allowedIMG(file);
+    const allowed = await allowedIMG(file) || await allowedATT(file);
     if (!allowed) {
       if (lastValidFile) {
         const dt = new DataTransfer();
@@ -889,6 +938,18 @@ devTicketInputImage.addEventListener('drop', async function (e) {
   await handleFile(devTicketInputImage, file);
   invoked = true;
 });
+if (removeAttachmentBtn && devTicketInputImage) {
+  removeAttachmentBtn.addEventListener('click', function () {
+    lastValidFile = null;
+    invoked = false;
+
+    devTicketInputImage.value = '';
+
+    devTicketInputImage.dispatchEvent(
+      new Event('change', { bubbles: true })
+    );
+  });
+}
 </script>
 @include('Chatsup.partials.customrequest')
 @include('Chatsup.partials.firebase')

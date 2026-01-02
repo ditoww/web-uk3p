@@ -16,6 +16,7 @@ use App\Mail\NotificationMail;
 use App\Mail\CompleteMail;
 use Carbon\Carbon;
 use App\Rules\StrictDocx;
+use App\Rules\StrictXlsx;
 
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Storage;
@@ -39,7 +40,7 @@ class SupportClientChatController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
             // Naikkan limit ke 5MB
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'image' => 'nullable|mimes:jpg,jpeg,png,webp,xlsx,docx,pdf|max:5120',
         ];
 
         $messages = [
@@ -53,8 +54,8 @@ class SupportClientChatController extends Controller
             'title.max' => 'Judul terlalu panjang. Mohon memendekkan judul tersebut.',
             'description.required' => 'Mohon isi deskripsi permasalahan pada tiket tersebut.',
             'description.max' => 'Deskripsi tersebut melewati batasan huruf 10000 karakter.',
-            'image.mimes'=> 'Gambar tersebut tidak menggunakan format yang dapat di-support.',
-            'image.max' => 'Ukuran maksimal gambar harus dibawah 5MB.'
+            'image.mimes'=> 'File tersebut tidak menggunakan format yang dapat di-support.',
+            'image.max' => 'Ukuran maksimal file harus dibawah 5MB.'
         ];
 
         $validated = $request->validate($rules, $messages);
@@ -103,71 +104,102 @@ class SupportClientChatController extends Controller
             }
             $size = $img->getSize();
             $ext = strtolower($img->getClientOriginalExtension());
-            $imageCount = DB::table('devAttachments')
+            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
+            if ($ext === 'docx') {
+                $rule = new StrictDocx();
+                if (!$rule->passes('image.*', $img)) {
+                    return back()->withErrors(['image' => 'File tidak valid'])->withInput();
+                }
+            }
+            if ($ext === 'xlsx') {
+                $rule = new StrictXlsx();
+                if (!$rule->passes('image.*', $img)) {
+                    return back()->withErrors(['image' => 'File tidak valid'])->withInput();
+                }
+            }
+            $count = $isImage ? DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
                 ->whereIn('devAttachments.fileExtension', ['jpg','jpeg','png','webp'])
+                ->count()
+                :   DB::table('devAttachments')
+                ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
+                ->where('devChats.ticket_id', $ticketId)
+                ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
                 ->count();
 
             $now = now();
             $chatCreated = $now->clone();
             $datePrefix = 'TK-' . \Carbon\Carbon::parse($chatCreated)->format('Ymd');
 
-            $fileName = $datePrefix . '-' . $chatId . '_' . ($imageCount + 1) . '_' . $img->getClientOriginalName();
-            $targetDir = public_path('chat_images');
+            $fileName = $datePrefix . '-' . $chatId . '_' . ($count + 1) . '_' . $img->getClientOriginalName();
+            $targetDir = $isImage ? public_path('chat_images') : public_path('chat_attachments');
             $targetPath = $targetDir . '/' . $fileName;
 
             if (!is_dir($targetDir)) {
                 mkdir($targetDir, 0775, true);
             }
+            if ($isImage) {
+                $imagick = new \Imagick();
+                $imagick->readImage($img->getRealPath());
+                $imagick->stripImage();
 
-            $imagick = new \Imagick();
-            $imagick->readImage($img->getRealPath());
-            $imagick->stripImage();
+                $w = $imagick->getImageWidth();
+                $h = $imagick->getImageHeight();
+                $maxDim = 1920;
 
-            $w = $imagick->getImageWidth();
-            $h = $imagick->getImageHeight();
-            $maxDim = 1920;
-
-            if ($w > $maxDim || $h > $maxDim) {
-                $ratio = min($maxDim / $w, $maxDim / $h);
-                $imagick->resizeImage((int)($w * $ratio), (int)($h * $ratio), \Imagick::FILTER_LANCZOS, 1);
-            }
-            // Extra downscale kualitas jika masih besar >1.5MB
-            if ($ext === 'jpg' || $ext === 'jpeg') {
-                $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                $imagick->setImageCompressionQuality(82);
-                if ($size > 1500 * 1024) {
-                    $imagick->setImageCompressionQuality(75);
+                if ($w > $maxDim || $h > $maxDim) {
+                    $ratio = min($maxDim / $w, $maxDim / $h);
+                    $imagick->resizeImage((int)($w * $ratio), (int)($h * $ratio), \Imagick::FILTER_LANCZOS, 1);
                 }
-            } elseif ($ext === 'webp') {
-                $imagick->setImageCompressionQuality($size > 1500 * 1024 ? 72 : 82);
-            } elseif ($ext === 'png') {
-                $imagick->setOption('png:compression-level', '9');
-                $imagick->setOption('png:compression-filter', '5');
-                if (($w * $h) > (1280 * 1280)) {
-                    $imagick->quantizeImage(256, \Imagick::COLORSPACE_RGB, 0, false, false);
+                // Extra downscale kualitas jika masih besar >1.5MB
+                if ($ext === 'jpg' || $ext === 'jpeg') {
+                    $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                    $imagick->setImageCompressionQuality(82);
+                    if ($size > 1500 * 1024) {
+                        $imagick->setImageCompressionQuality(75);
+                    }
+                } elseif ($ext === 'webp') {
+                    $imagick->setImageCompressionQuality($size > 1500 * 1024 ? 72 : 82);
+                } elseif ($ext === 'png') {
+                    $imagick->setOption('png:compression-level', '9');
+                    $imagick->setOption('png:compression-filter', '5');
+                    if (($w * $h) > (1280 * 1280)) {
+                        $imagick->quantizeImage(256, \Imagick::COLORSPACE_RGB, 0, false, false);
+                    }
                 }
+
+                if (!$imagick->writeImage($targetPath)) {
+                    throw new \Exception('Imagick failed to write image.');
+                }
+
+                $imagick->clear();
+                $imagick->destroy();
+
+                $filePath = asset('chat_images/' . $fileName);
+                $finalSize = @filesize($targetPath) ?: $size;
+                DB::table('devAttachments')->insert([
+                    'chatID' => $chatId,
+                    'fileName' => $fileName,
+                    'fileExtension' => $img->getClientOriginalExtension(),
+                    'filePath' => $filePath,
+                    'fileSize' => $finalSize,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                $img->move(public_path('chat_attachments/'), $fileName);   
+                $filePath = asset('chat_attachments/' . $fileName);
+                DB::table('devAttachments')->insert([
+                    'chatID' => $chatId,
+                    'fileName' => $fileName,
+                    'fileExtension' => $img->getClientOriginalExtension(),
+                    'filePath' => $filePath,
+                    'fileSize' => $size,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
-
-            if (!$imagick->writeImage($targetPath)) {
-                throw new \Exception('Imagick failed to write image.');
-            }
-
-            $imagick->clear();
-            $imagick->destroy();
-
-            $filePath = asset('chat_images/' . $fileName);
-            $finalSize = @filesize($targetPath) ?: $size;
-            DB::table('devAttachments')->insert([
-                'chatID' => $chatId,
-                'fileName' => $fileName,
-                'fileExtension' => $img->getClientOriginalExtension(),
-                'filePath' => $filePath,
-                'fileSize' => $finalSize,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
         }
 
         return redirect()->route('Chatsup.chatsup', ["ticket_dev" => $ticketId])
@@ -181,7 +213,7 @@ class SupportClientChatController extends Controller
             'role_id' => 'required_if:case_type,external|nullable|integer|exists:devRoles,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'image' => 'nullable|mimes:jpg,jpeg,png,webp,xlsx,docx,pdf|max:5120',
         ];
 
         $messages = [
@@ -213,7 +245,7 @@ class SupportClientChatController extends Controller
         $user = Auth::user();
         if (!$user) abort(403);
 
-        $selectedId = (int) $request->query('ticket');
+        $selectedId = (int) $request->query('ticket_user');
 
         $tickets = DB::table('clientTickets')
             ->where('isDeleted', 0)
@@ -226,9 +258,11 @@ class SupportClientChatController extends Controller
         if ($selectedId && !$tickets->contains('id', $selectedId)) {
             $sel = DB::table('clientTickets')
                 ->where('id', $selectedId)
+                ->where('supportID', $user->id)
                 ->select('id', 'title', 'status')
                 ->first();
             if ($sel) $tickets = collect([$sel])->concat($tickets);
+            else $selectedId = null;
         }
 
         // Ambil dari model DevRole, alias roleName -> name agar Blade tetap pakai $role->name
@@ -432,6 +466,12 @@ class SupportClientChatController extends Controller
                         continue;
                     }
                 }
+                if ($extension === 'xlsx') {
+                    $rule = new StrictXlsx();
+                    if (!$rule->passes('attachment.*', $file)) {
+                        continue;
+                    }
+                }
                 $imageResolutions[] = [0,0];
                 $attCount++;
                 $newFileName = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' .($idx + 1) . '_' . $file->getClientOriginalName();
@@ -450,7 +490,7 @@ class SupportClientChatController extends Controller
                     'chatID' => $chatId,
                     'fileName' => $newFileName,
                     'filePath' => $filePath,
-                    'fileExtension' => $file->getClientOriginalExtension(),
+                    'fileExtension' => $extension,
                     'fileSize' => $size,
                     'created_at' => now(),
                     'updated_at' => now(),

@@ -53,7 +53,7 @@
                     <td>{{ $app->id }}</td>
                     <td>{{ $app->appName }}</td>
                     <td>{{ $app->role->roleName }}</td>
-                    <td>{{ \Carbon\Carbon::parse($app->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
+                    <td>{{ $app->created_at ? \Carbon\Carbon::parse($app->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') : '-' }}</td>
                     <td>
                 <div class="dropdown">
                     <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
@@ -90,15 +90,16 @@
                                 <div class="modal-body">
                                     <div class="mb-3">
                                         <label>Nama Aplikasi</label>
-                                        <input type="text" name="appName" value="{{ $app->appName }}" oninput="validateInput(this)" class="form-control @error('appName') is-invalid @enderror">
+                                        <input type="text" name="appName" id="update-{{$app->id}}-appName" value="{{ $app->appName }}" oninput="validateInput(this)" class="form-control @error('appName') is-invalid @enderror">
                                         @error('appName')
                                             <div style="color: red; font-size: 13px;">{{ $message }}</div>
                                         @enderror
                                         <span id="err-update-{{$app->id}}-appName" style="color: red; font-size: 13px;"></span>
                                     </div>
+                                    <input type="hidden" name="roleID" id="roleID_{{$app->id}}">
                                     <div class="mb-3">
                                         <label for="emailLarge" class="form-label">Role</label>
-                                        <select name="roleID" class="select2 form-select @error('roleID') is-invalid @enderror">
+                                        <select id="update-{{$app->id}}-roleID" class="select2 form-select @error('roleID') is-invalid @enderror">
                                             @foreach ($roles as $r)
                                                 <option value="{{ $r->id }}" {{ $app->roleID == $r->id ? 'selected' : '' }}>{{ $r->roleName }}</option>
                                             @endforeach
@@ -135,15 +136,16 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Nama Aplikasi</label>
-                        <input type="text" name="appName" class="form-control @error('appName') is-invalid @enderror" oninput="validateInput(this)">
+                        <input type="text" name="appName" id="appName" class="form-control @error('appName') is-invalid @enderror" oninput="validateInput(this)">
                         @error('appName')
                             <div style="color: red; font-size: 13px;">{{ $message }}</div>
                         @enderror
                         <span id="err-appName" style="color: red; font-size: 13px;"></span>
                     </div>
+                    <input type="hidden" name="roleID" id="roleID">
                     <div class="mb-3">
                         <label for="emailLarge" class="form-label">Role</label>
-                        <select name="roleID" class="select2 form-select @error('roleID') is-invalid @enderror">
+                        <select id="roleID-select" class="select2 form-select @error('roleID') is-invalid @enderror">
                             @foreach ($roles as $r)
                                 <option value="{{ $r->id }}">{{ $r->roleName }}</option>
                             @endforeach
@@ -194,12 +196,42 @@
 </div> {{-- Tutup container --}}
 
 <script>
+  const allRoleInputs = document.querySelectorAll('[id^="roleID_"]');
   const mainForm = document.querySelector('#form-form');
 
+  document.addEventListener('DOMContentLoaded', function() {
+    const sl = document.getElementById('roleID-select');
+    const r = document.getElementById('roleID');
+
+    r.value = sl.value;
+
+    sl.addEventListener('change', function () {
+        if (!r.readOnly)
+        r.value = this.value;
+    });
+    
+    allRoleInputs.forEach(function(inp) {
+      const id = inp.id.replace('roleID_', "")
+      const selector = document.getElementById(`update-${id}-roleID`);
+
+      inp.value = selector.value;
+      selector.addEventListener('change', function () {
+        if (!inp.readOnly)
+        inp.value = this.value;
+      });
+    });
+  })
+
+  function reassignUpdateRoleValue(id) {
+      const i = document.getElementById('roleID_'+id)
+      const selector = document.getElementById(`update-${id}-roleID`);
+
+      i.value = selector.value;
+  }
+  const fields = ['appName', 'roleID'];
   function clearAjaxErrors() {
-    const fields = ['appName', 'roleID'];
     fields.forEach(function(name){
-      const input = mainForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(name);
       const span = document.getElementById(`err-${name}`);
       if (span) span.textContent = '';
       if (input) {
@@ -211,22 +243,30 @@
 
   function showAjaxErrors(errors) {
     Object.keys(errors).forEach(function(name){
-      const input = mainForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(name);
       const span = document.getElementById(`err-${name}`);
       if (span) span.textContent = errors[name][0];
-      if (input) {
-        input.classList.add('is-invalid');
-        input.readOnly = false;
-      }
+      if (input) input.classList.add('is-invalid');
     });
+    fields.forEach(function(name){
+      const input = document.getElementById(name);
+      input.readOnly = false;
+    })
+    const selector = document.getElementById('roleID-select');
+    const role = document.getElementById('roleID');
+    //when value is changed, immediately assign it
+    role.value = selector.value;
   }
 
   function clearAjaxErrorsUpdate(id) {
-    const updateForm = document.querySelector(`#update-form-${id}`);
     const fields = ['appName', 'roleID'];
     fields.forEach(function(name){
-      const input = updateForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(`update-${id}-${name}`);
       const span = document.getElementById(`err-update-${id}-${name}`);
+      if (name === "roleID") {
+        const r = document.getElementById(`roleID_${id}`)
+        r.readOnly = true;
+      }
       if (span) span.textContent = '';
       if (input) {
         input.classList.remove('is-invalid');
@@ -235,10 +275,9 @@
     });
   }
 
-  function showAjaxErrorsUpdate(errors) {
-    const updateForm = document.querySelector(`#update-form-${id}`);
+  function showAjaxErrorsUpdate(errors, id) {
     Object.keys(errors).forEach(function(name){
-      const input = updateForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(`update-${id}-${name}`);
       const span = document.getElementById(`err-update-${id}-${name}`);
       if (span) span.textContent = errors[name][0];
       if (input) {
@@ -246,6 +285,15 @@
         input.readOnly = false;
       }
     });
+    fields.forEach(function(name){
+      const input = document.getElementById(`update-${id}-${name}`);
+      input.readOnly = false;
+      if (name === "roleID") {
+        const r = document.getElementById(`roleID_${id}`)
+        r.readOnly = false;
+      }
+    })
+    reassignUpdateRoleValue(id);
   }
 
   function validateAndSubmit(e) {

@@ -20,7 +20,9 @@ class UserSeeder extends Seeder
             'email' => "Aaron.esteban@gmail.com",
             'password' => Hash::make(env('SUPER_ADMIN_PASSWORD_ONE')),
             'privLevel' => "super_admin",
-            'phone_number' => "08123456789"
+            'phone_number' => "08123456789",
+            'created_at' => now(),
+            'updated_at' => now()
         ]);
     }
 }

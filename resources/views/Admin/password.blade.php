@@ -73,7 +73,7 @@
                                 <div class="modal-body">
                                     <div class="mb-3">
                                         <label>Nama Password</label>
-                                        <input type="password" name="pass" oninput="validateInput(this)" class="form-control @error('pass') is-invalid @enderror">
+                                        <input type="password" name="pass" id="update-{{$app->id}}-pass" oninput="validateInput(this)" class="form-control @error('pass') is-invalid @enderror">
                                         @error('pass')
                                             <div style="color: red; font-size: 13px;">{{ $message }}</div>
                                         @enderror
@@ -81,7 +81,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label>Konfirmasi Password</label>
-                                        <input type="password" name="pass_confirmation" oninput="validateInput(this)" class="form-control">
+                                        <input type="password" name="pass_confirmation" id="update-{{$app->id}}-pass_confirmation" oninput="validateInput(this)" class="form-control">
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -128,10 +128,9 @@
 
 <script>
   function clearAjaxErrorsUpdate(id) {
-    const updateForm = document.querySelector(`#update-form-${id}`);
-    const fields = ['pass'];
+    const fields = ['pass','pass_confirmation'];
     fields.forEach(function(name){
-      const input = updateForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(`update-${id}-${name}`);
       const span = document.getElementById(`err-update-${id}-${name}`);
       if (span) span.textContent = '';
       if (input) {
@@ -141,10 +140,9 @@
     });
   }
 
-  function showAjaxErrorsUpdate(errors) {
-    const updateForm = document.querySelector(`#update-form-${id}`);
+  function showAjaxErrorsUpdate(errors, id) {
     Object.keys(errors).forEach(function(name){
-      const input = updateForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(`update-${id}-${name}`);
       const span = document.getElementById(`err-update-${id}-${name}`);
       if (span) span.textContent = errors[name][0];
       if (input) {

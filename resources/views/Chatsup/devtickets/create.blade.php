@@ -18,8 +18,8 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h4 class="mb-0"><i class="bi bi-journal-plus me-2"></i>Buat Dev Ticket</h4>
     <div class="d-flex gap-2">
-      @if(request('ticket'))
-        <a href="{{ route('SupportClientChat.supportclientchat', ['ticket' => request('ticket')]) }}" class="btn btn-outline-secondary">
+      @if(request('ticket_user'))
+        <a href="{{ route('SupportClientChat.supportclientchat', ['ticket' => request('ticket_user')]) }}" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left me-1"></i> Kembali ke Chat
         </a>
       @else
@@ -91,7 +91,8 @@
         <!-- Role (untuk komplain di luar sistem) -->
         <div class="mb-3" id="roleSection" style="display:none;">
           <label class="form-label">Pilih Role <span class="text-danger">*</span></label>
-          <select name="role_id" id="role_id" class="form-select">
+          <input type="hidden" id="role_id" name="role_id">
+          <select id="role_id_select" class="form-select">
             <option value="">-- Pilih Role --</option>
             @foreach(($roles ?? []) as $role)
               <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
@@ -106,6 +107,7 @@
           <input
             type="text"
             name="title"
+            id="title"
             class="form-control"
             placeholder="Judul Ticket"
             value="{{ old('title') }}"
@@ -130,9 +132,16 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Attachment Gambar (opsional)</label>
-          <input type="file" id="devTicketImageInput" name="image" accept=".jpg,.jpeg,.png,.webp" class="form-control"/>
-          <small class="text-muted">Max 5MB. JPG / PNG / WEBP akan dikompres otomatis.</small>
+          <label class="form-label">Attachment (opsional)</label>
+          <div class="d-flex align-items-center">
+            <input type="file" id="devTicketImageInput" name="image" accept=".jpg,.jpeg,.png,.webp,.xlsx,.docx,.pdf" class="form-control w-75"/>          
+            <div class="mx-4">
+              <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachmentBtn">
+                <i class="bi bi-x-circle me-1"></i> Hapus Attachment
+              </button>
+            </div>
+          </div>
+          <small class="text-muted">Max 5MB. JPG / PNG / WEBP / PDF / DOCX / XLSX (gambar akan dikompres otomatis).</small>
         </div>
 
         <div class="d-flex gap-2">
@@ -177,7 +186,71 @@
 @section('scripts')
 @include('partials.fileverifier')
 <script>
+  window.currentAnchor = null;
+  document.addEventListener('DOMContentLoaded', function () {
+    const selector = document.getElementById('role_id_select');
+    const role = document.getElementById('role_id');
+
+    // init value
+    role.value = selector.value;
+
+    selector.addEventListener('change', function () {
+        if (!role.readOnly)
+        role.value = this.value;
+    });
+});
 (function() {
+  const allowedImages = ['png', 'jpg', 'jpeg', 'webp'];
+  const allowedAtts = ['docx', 'pdf','xlsx'];
+  const maxSize = 5 * 1024 * 1024;
+
+  function getExt(s){
+    return s.split('.').pop().toLowerCase();
+  }
+
+  async function allowedIMG(f){
+    if (!f) return false;
+    const ext = getExt(f.name);
+    if (!allowedImages.includes(ext)) return false;
+    if (f.size > maxSize) return false;
+    if (f.name.length > 191) return false;
+
+    const sig = await getFileSignature(f);
+
+    if (["jpg", "jpeg"].includes(ext)) {
+        return sig === "ffd8ffe0" || sig === "ffd8ffe1" || sig === "ffd8ffe2";
+    }
+    if (ext === "png") {
+        return sig === "89504e47";
+    }
+    if (ext === "webp") {
+        return await isWebP(f);
+    }
+
+    return false;
+  }
+
+  async function allowedATT(f){
+    const ext = getExt(f.name);
+    if (!allowedAtts.includes(ext)) return false;
+    if (f.size > maxSize) return false;
+    if (f.name.length > 191) return false;
+
+    const sig = await getFileSignature(f);
+
+    if (ext === "pdf") {
+        return sig === "25504446";
+    }
+    if (ext === "docx") { //Apparently a Docx is a zip so... extra precautions ahead!
+        return await isDocx(f);
+    }
+    if (ext === "xlsx") {
+        return await isXlsx(f);
+    }
+
+    return false;
+  }
+
   var devTicketDescription = document.getElementById('description');
   var devTicketImageInput = document.getElementById('devTicketImageInput');
   var wordCountDisplay = document.getElementById('description-word-count');
@@ -191,9 +264,10 @@
   var roleSection = document.getElementById('roleSection');
   var roleSelect = document.getElementById('role_id');
   var form = document.getElementById('create-dev-ticket-form');
+  const btn  = document.getElementById('btn-submit');
   var charLimit = 10000;
 
-  var currentAnchor = null; // anchor aktif untuk positioning
+  //window.currentAnchor = null; // anchor aktif untuk positioning
 
   function validateTitleInput(el) {
     el.value = el.value.replace(/[\x00-\x1F\x7F]/g, '');
@@ -258,10 +332,10 @@
   }
 
   function openTicketPicker(anchor) {
-    if (getCaseType() !== 'ticket') return; // hanya saat mode ticket
-    currentAnchor = anchor || openPickerBtn;
+    if (getCaseType() !== 'ticket' || btn.disabled) return; // hanya saat mode ticket
+    window.currentAnchor = anchor || openPickerBtn;
     ticketPicker.style.display = 'block';
-    positionPicker(currentAnchor);
+    positionPicker(window.currentAnchor);
     if (ticketSearch) {
       ticketSearch.value = '';
       filterTickets('');
@@ -271,7 +345,7 @@
 
   function closeTicketPicker() {
     ticketPicker.style.display = 'none';
-    currentAnchor = null;
+    window.currentAnchor = null;
   }
 
   function filterTickets(q) {
@@ -298,10 +372,10 @@
   }
 
   window.addEventListener('resize', function() {
-    if (ticketPicker.style.display === 'block') positionPicker(currentAnchor);
+    if (ticketPicker.style.display === 'block') positionPicker(window.currentAnchor);
   });
   window.addEventListener('scroll', function() {
-    if (ticketPicker.style.display === 'block') positionPicker(currentAnchor);
+    if (ticketPicker.style.display === 'block') positionPicker(window.currentAnchor);
   }, true);
 
   if (ticketSearch) {
@@ -338,33 +412,68 @@
     r.addEventListener('change', updateCaseTypeUI);
   });
 
-  async function validateImageFile(input) {
-    var file = input.files && input.files[0];
-    if (!file) return;
+  let lastValidFile = null;
+  let invoked = false;
 
-    if (file.name.length > 191) return;
-
-    var max5MB = 5 * 1024 * 1024;
-    if (file.size > max5MB) {
-      input.value = '';
+  async function validateFile(element, file) {
+    if (!file) {
+      if (lastValidFile) {
+        const dt = new DataTransfer();
+        dt.items.add(lastValidFile);
+        element.files = dt.files;
+        if(!invoked) element.dispatchEvent(new Event("change", { bubbles: true }));
+      } else {
+        element.value = "";
+      }
       return;
     }
 
-    if (typeof allowedIMG === 'function') {
-      var ok = await allowedIMG(file);
-      if (!ok) {
-        input.value = '';
+    if (file.size > 5 * 1024 * 1024) {
+      if (lastValidFile) {
+        const dt = new DataTransfer();
+        dt.items.add(lastValidFile);
+        element.files = dt.files;
+        if(!invoked) element.dispatchEvent(new Event("change", { bubbles: true }));
+      } else {
+        element.value = "";
       }
-    } else {
-      var ok2 = ['image/jpeg','image/png','image/jpg','image/webp'].indexOf(file.type) !== -1;
-      if (!ok2) {
-        input.value = '';
-      }
+      return;
     }
+
+    const allowed = await allowedIMG(file) || await allowedATT(file);
+    if (!allowed) {
+      if (lastValidFile) {
+        const dt = new DataTransfer();
+        dt.items.add(lastValidFile);
+        element.files = dt.files;
+        if(!invoked) element.dispatchEvent(new Event("change", { bubbles: true }));
+      } else {
+        element.value = "";
+      }
+      return;
+    }
+
+    lastValidFile = file;
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    element.files = dt.files;
+    if(!invoked) element.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
   if (devTicketImageInput) {
-    devTicketImageInput.addEventListener('change', function(){ validateImageFile(devTicketImageInput); });
+    devTicketImageInput.addEventListener('change', async function (e) {
+      const file = e.target.files && e.target.files[0];
+      await validateFile(devTicketImageInput, file);
+      invoked = true;
+    });
+
+    devTicketImageInput.addEventListener('drop', async function (e) {
+      e.preventDefault();
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      await validateFile(devTicketImageInput, file);
+      invoked = true;
+    });
   }
 
   if (form) {
@@ -389,10 +498,28 @@
       }
     });
   }
+
+  const removeAttachmentBtn = document.getElementById('removeAttachmentBtn');
+
+  if (removeAttachmentBtn && devTicketImageInput) {
+    removeAttachmentBtn.addEventListener('click', function () {
+      lastValidFile = null;
+      invoked = false;
+
+      devTicketImageInput.value = '';
+
+      devTicketImageInput.dispatchEvent(
+        new Event('change', { bubbles: true })
+      );
+    });
+  }
 })();
 </script>
 <script>
   const fileInput = document.getElementById('devTicketImageInput');
+  const clientTicketInput = document.getElementById('client_ticket_id');
+
+  const fields = ['title','description'];
 
   function getCaseType() {
     var checked = document.querySelector('input[name="case_type"]:checked');
@@ -408,6 +535,19 @@
       err.innerHTML = "";
       err.classList.toggle('d-none', true)
     }
+    if (getCaseType() === 'ticket') {
+      var ticketPicker = document.getElementById('ticketPicker');
+      ticketPicker.style.display = 'none';
+      window.currentAnchor = null;
+    } else {
+      const role = document.getElementById('role_id');
+      role.readOnly = true;
+    }
+    fields.forEach(function(name) {
+        const input = document.getElementById(name);
+        input.readOnly = true;
+      }
+    )
   }
 
   function showAjaxErrors(errors) {
@@ -423,6 +563,17 @@
       err.classList.toggle('d-none', false);
       err.innerHTML = `<ul class="mb-0">${allium}</ul>`;
     }
+    if (getCaseType() !== 'ticket') {
+      const selector = document.getElementById('role_id_select');
+      const role = document.getElementById('role_id');
+      role.value = selector.value;
+      role.readOnly = false;
+    }
+    fields.forEach(function(name) {
+        const input = document.getElementById(name);
+        if (input) input.readOnly = false;
+      }
+    )
   }
 
   function validateAndSubmit(e) {
@@ -433,7 +584,6 @@
 
     const fd = new FormData(form);
     fd.append('_token', '{{ csrf_token() }}');
-    console.log(getCaseType());
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Buat';

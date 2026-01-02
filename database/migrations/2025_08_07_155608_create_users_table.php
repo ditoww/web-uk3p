@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('status', 12)->nullable();
             $table->string('password', 255)->nullable();
             $table->string('profile_picture', 255)->nullable();
-            $table->enum('privLevel', ['admin', 'super admin', 'support', 'spv', 'developer'])->nullable();
+            $table->enum('privLevel', ['admin', 'super_admin', 'support', 'spv', 'developer'])->nullable();
             $table->string('phone_number', 20)->nullable();
             $table->unsignedBigInteger('devRoleID')->nullable();
             $table->tinyInteger('isDeleted')->default(0);

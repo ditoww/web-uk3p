@@ -34,4 +34,11 @@ async function isDocx(file) {
   const zip = await JSZip.loadAsync(file);
   return zip.files["[Content_Types].xml"] && zip.files["word/document.xml"] && zip.files["_rels/.rels"];
 }
+async function isXlsx(file) {
+  const sig = await getFileSignature(file);
+  if (sig !== "504b0304") return false;
+
+  const zip = await JSZip.loadAsync(file);
+  return zip.files["[Content_Types].xml"] && zip.files["xl/styles.xml"] && zip.files["_rels/.rels"] && zip.files['xl/workbook.xml'], zip.files['xl/_rels/workbook.xml.rels'];
+}
 </script>

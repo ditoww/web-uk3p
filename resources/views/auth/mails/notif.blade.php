@@ -17,7 +17,7 @@
             <td>
               <h4>Halo, <b>{{ $name }}.</b></h4>
               <p>Anda menerima pesan kepada tiket Anda yang berjudul <b>{{ $ticketName }}.</b></p>
-              @if($response) <p>{{ $response }}</p> @endif
+              @if($response) <p>{!! nl2br(e($response)) !!}</p> @endif
               @if($attCount > 0) <i>@if($response) Selain itu, ada {{$attCount}} attachment yang telah dikirimkan. @else Ada {{$attCount}} attachment yang telah dikirimkan. @endif </i> @endif
               <p>Klik <a href="{{$ticketLinker}}" style="word-break: break-word; hyphens: none; font-weight: 700; color: #0b234a;">disini</a> untuk mengakses tiket tersebut.</p>
             </td>

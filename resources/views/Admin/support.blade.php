@@ -146,7 +146,7 @@
           <span class="badge rounded-pill" style="background-color: #fef3c7; color: #92400e; padding: 6px 12px; font-weight: 600;">Away</span>
         @endif
       </td>
-      <td>{{ \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
+      <td>{{ $p->created_at ? \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') : '-' }}</td>
         <!-- <img src="gambar" alt="Avatar" class="rounded-circle" style="width: 40px; height: 40px;"> -->
       
       <td>
@@ -213,7 +213,7 @@
                                     @error('upload')
                                       <div id="byp-upload" style="color: red; font-size: 13px;">{{ $message }}</div>
                                     @enderror
-                                    <div id="error-upload" class="text-danger small"></div>
+                                    <div id="error-upload" style="color: red; font-size: 13px;"></div>
                                   </div>
                                 </div>
 
@@ -221,11 +221,11 @@
                                 <div class="col mb-3">
                                   <label for="usernameField" class="form-label">Username</label>
                                   <input type="text" id="usernameField" name="username" class="form-control @error('username') is-invalid @enderror" placeholder="SupOne" oninput="validateUserInput(this)" />
-                                  <span id="error-message-user" style="color: red;"></span>
+                                  <span id="error-message-user" style="color: red; font-size: 13px;"></span>
                                   @error('username')
                                     <div id="byp-username" style="color: red; font-size: 13px;">{{ $message }}</div>
                                   @enderror
-                                  <div id="error-username" class="text-danger small"></div>
+                                  <div id="error-username" style="color: red; font-size: 13px;"></div>
                                 </div>
                               </div>
 
@@ -234,11 +234,11 @@
                                 <div class="col mb-0">
                                   <label for="inputHuruf" class="form-label">Nama</label>
                                   <input type="text" id="inputHuruf" name="nama" class="form-control @error('nama') is-invalid @enderror" placeholder="Support One" oninput="validateInput(this)" />
-                                  <span id="error-message" style="color: red;"></span>
+                                  <span id="error-message" style="color: red; font-size: 13px;"></span>
                                    @error('nama')
                                     <div id="byp-nama" style="color: red; font-size: 13px;">{{ $message }}</div>
                                   @enderror
-                                  <div id="error-nama" class="text-danger small"></div>
+                                  <div id="error-nama" style="color: red; font-size: 13px;"></div>
                                 </div>
                               </div>
 
@@ -250,7 +250,7 @@
                                   @error('email')
                                     <div id="byp-email" style="color: red; font-size: 13px;">{{ $message }}</div>
                                   @enderror
-                                  <div id="error-email" class="text-danger small"></div>
+                                  <div id="error-email" style="color: red; font-size: 13px;"></div>
                                 </div>
                                 <div class="col mb-0">
                                   <label for="phoneNumber" class="form-label">No HP (Opsional)</label>
@@ -261,7 +261,7 @@
                                   @error('nohp')
                                     <div id="byp-nohp" style="color: red; font-size: 13px;">{{ $message }}</div>
                                   @enderror
-                                  <div id="error-nohp" class="text-danger small"></div>
+                                  <div id="error-nohp" style="color: red; font-size: 13px;"></div>
                                 </div>
                               </div>
 
@@ -280,7 +280,7 @@
                                     @error('pass')
                                       <div id="byp-pass" style="color: red; font-size: 13px;">{{ $message }}</div>
                                     @enderror
-                                    <div id="error-pass" class="text-danger small"></div>
+                                    <div id="error-pass" style="color: red; font-size: 13px;"></div>
                                   </div>
                                 </div>
                               </div>
@@ -372,7 +372,7 @@
                           <div class="row g-2 mb-3">
                             <div class="col mb-0">
                               <label for="createdAtField" class="form-label">Dibuat Pada</label>
-                              <input type="text" id="createdAtField" class="form-control" value="{{$p->created_at}}" readonly placeholder="" />
+                              <input type="text" id="createdAtField" class="form-control" value="{{$p->created_at ?? '-'}}" readonly placeholder="" />
                             </div>
                           </div>
                             
@@ -473,6 +473,7 @@ function validateUserInput(inputElement) {
 }
 
 let lastValidFile = null;
+const fileInput = document.querySelector('.account-file-input');
 const allowedImages = ['png', 'jpg', 'jpeg'];
 const maxSize = 5 * 1024 * 1024;
 function getExt(s){
@@ -533,11 +534,25 @@ async function handleFile(element, file) {
     return;
   }
 
-  lastValidFile = file;
+  if (fileInput.dataset.stopper === "not active") {
+    lastValidFile = file;
 
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  element.files = dt.files;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    element.files = dt.files;
+
+    return;
+  }
+  else if (fileInput.dataset.stopper === "active") {
+    if (lastValidFile) {
+        const dt = new DataTransfer();
+        dt.items.add(lastValidFile);
+        element.files = dt.files;
+    } else {
+        element.value = "";
+    }
+    return;
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -557,7 +572,7 @@ if (accountUserImage) {
   };*/
 
   fileInput.addEventListener('change', async function (e) {
-    if (fileInput.dataset.stopper === "active") return;
+    e.preventDefault();
     const file = e.target.files && e.target.files[0];
     await handleFile(fileInput, file);
     if (lastValidFile) {
@@ -566,8 +581,9 @@ if (accountUserImage) {
   });
 
   resetFileInput.onclick = () => {
-    if (fileInput.dataset.stopper === "active") return;
+    e.preventDefault();
     fileInput.value = '';
+    lastValidFile = null;
     accountUserImage.src = resetImage;
   };
 }
@@ -725,7 +741,6 @@ $("#copyTable").on('click', function() {
 
 <script>
   const fields = ['username','nama','email','nohp','role','pass','upload'];
-  const fileInput = document.querySelector('.account-file-input');
   function clearAjaxErrorsSupport() {
     fileInput.dataset.stopper = "active";
     const map = {
@@ -736,11 +751,12 @@ $("#copyTable").on('click', function() {
       pass:     { input: '[name="pass"]',     holder: '#error-pass' },
       upload:   { input: '[name="upload"]',   holder: '#error-upload' },
     };
+    document.getElementById('error-message').textContent = '';
+    document.getElementById('error-message-user').textContent = '';
     Object.values(map).forEach(({input, holder}) => {
       const el = document.querySelector(input);
       const h  = document.querySelector(holder);
       const byp = document.getElementById(`byp-${name}`);
-      document.getElementById('error-message').textContent = '';
       if (h) h.textContent = '';
       if (byp) byp.textContent = '';
       if (el) {

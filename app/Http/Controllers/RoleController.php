@@ -86,7 +86,7 @@ class RoleController extends Controller
     public function validateUpdate(Request $request, $id): \Illuminate\Http\JsonResponse
     {
         $rules = [
-            'roleName' => 'required|string|max:100|unique:devRoles,roleName'
+            'roleName' => 'required|string|max:100|unique:devRoles,roleName,' . $id . ',id'
         ];
 
         $messages = [

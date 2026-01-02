@@ -302,6 +302,7 @@
     const ext = filename.split('.').pop().toLowerCase();
     if (ext === 'pdf') return 'bi bi-file-earmark-pdf pdf-icon me-2';
     if (ext === 'docx') return 'bi bi-file-earmark-word doc-icon me-2';
+    if (ext === 'xlsx') return 'bi bi-file-earmark-excel excel-icon me-2';
     return 'bi bi-file-earmark-arrow-down me-2';
   }
 </script>

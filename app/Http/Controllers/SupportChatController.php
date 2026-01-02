@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\DevTicket;
 use App\Models\DevChat;
 use App\Rules\StrictDocx;
+use App\Rules\StrictXlsx;
 //use App\Services\WhatsAppNotificationService;
 
 use Imagick;
@@ -168,13 +169,19 @@ class SupportChatController extends Controller
             $attachmentCount = DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['docx','pdf'])
+                ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
                 ->count();
 
             foreach ($request->file('attachment') as $idx => $file) {
                 $extension = strtolower($file->getClientOriginalExtension());
                 if ($extension === 'docx') {
                     $rule = new StrictDocx();
+                    if (!$rule->passes('attachment.*', $file)) {
+                        continue;
+                    }
+                }
+                if ($extension === 'xlsx') {
+                    $rule = new StrictXlsx();
                     if (!$rule->passes('attachment.*', $file)) {
                         continue;
                     }
@@ -378,10 +385,23 @@ class SupportChatController extends Controller
                     $attachmentCount = DB::table('devAttachments')
                     ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                     ->where('devChats.ticket_id', $ticketId)
-                    ->whereIn('devAttachments.fileExtension', ['docx','pdf'])
+                    ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
                     ->count();
                     // For now, we'll store the attachment info
                     // In a real implementation, you'd want to handle file uploads properly
+                    $extension = strtolower($file->getClientOriginalExtension());
+                    if ($extension === 'docx') {
+                        $rule = new StrictDocx();
+                        if (!$rule->passes('attachment.*', $file)) {
+                            continue;
+                        }
+                    }
+                    if ($extension === 'xlsx') {
+                        $rule = new StrictXlsx();
+                        if (!$rule->passes('attachment.*', $file)) {
+                            continue;
+                        }
+                    }
                     $size = $file->getSize();
                     $newFileName =  $datePrefix . '-' . $chatId . '_' . ($attachmentCount + $idx + 1) . '_' . $file->getClientOriginalName();
                     $targetPath = public_path('chat_attachments/' . $newFileName);
@@ -399,7 +419,7 @@ class SupportChatController extends Controller
                         'fileName' => $newFileName,
                         'filePath' => $filePath,
                         'fileSize' => $size,
-                        'fileExtension' => $file->getClientOriginalExtension(),
+                        'fileExtension' => $extension,
                         'created_at' => $now,
                         'updated_at' => $now,
                     ]);
@@ -408,7 +428,7 @@ class SupportChatController extends Controller
                         'type' => 'file',
                         'name' => $newFileName,
                         'url' => $filePath,
-                        'extension' => $file->getClientOriginalExtension(),
+                        'extension' => $extension,
                         'size' => $size
                     ];
                 }

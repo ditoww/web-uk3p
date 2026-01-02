@@ -278,7 +278,7 @@ class RealtimeChat {
         this.displaySystemMessage(un);
         const t = String(ticketTakeData.ticketId);
         const card = document.getElementById('tc-' + ticketTakeData.ticketId);
-        const small = card.querySelector('small');
+        const small = card.querySelector('small > span.name');
         small.textContent = small.textContent.replace('(Belum Diambil)', ticketTakeData.userName);
         if (t !== String(this.ticketId)) return;
         const submitterPFP = document.querySelector('.submitter img');
@@ -709,8 +709,8 @@ class RealtimeChat {
     getFileIcon(mimeType) {
         if (mimeType.startsWith('image/')) return 'bi bi-file-earmark-image';
         if (mimeType.includes('pdf')) return 'bi bi-file-earmark-pdf pdf-icon';
+        if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'bi bi-file-earmark-excel excel-icon';
         if (mimeType.includes('word') || mimeType.includes('document')) return 'bi bi-file-earmark-word doc-icon';
-        if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'bi bi-file-earmark-excel';
         if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'bi bi-file-earmark-ppt';
         if (mimeType.includes('zip') || mimeType.includes('rar')) return 'bi bi-file-earmark-zip';
         if (mimeType.includes('text/')) return 'bi bi-file-earmark-text';

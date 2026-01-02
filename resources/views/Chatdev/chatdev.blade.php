@@ -188,6 +188,10 @@
     color: #1976d2;
   }
 
+  .excel-icon {
+    color: #007329;
+  }
+
   .file-box {
     border: 1px solid #dee2e6;
     background: #f8f9fa;
@@ -256,7 +260,7 @@
     font-weight: 600;
     color: #212529;
     margin-bottom: 0;
-
+    max-width: 240px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -381,9 +385,38 @@
     border-radius: 50%;
   }
 
+  .ticket-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+    max-height: calc(1.4em * 2);
+  }
+
   @keyframes dotGrowing {
     0%, 80%, 100% { transform: scale(0.8); background-color: #979797;}
     40% { transform: scale(1.2); background-color: #7D7D7D;}
+  }
+
+  .meta-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .meta-line .name {
+    max-width: 128px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+  }
+
+  .meta-line .time {
+    flex-shrink: 0; 
   }
 </style>
 @endsection
@@ -423,12 +456,16 @@
         <div class="ticket-card mb-2 p-2 rounded {{ $isActive ? 'bg-light' : '' }}" id="tc-{{ $ticket->id }}">
           <span class="badge {{ $statusClass }} badge-status mb-1">{{ $ticket->status }}</span>
           <div class="fw-semibold text-primary">TK-{{ \Carbon\Carbon::parse($ticket->created_at)->format('Y') }}-{{ str_pad($ticket->id, 3, '0', STR_PAD_LEFT) }}</div>
-          <div class="mb-1">{{ $ticket->title }}</div>
+          <div class="mb-1 ticket-title">{{ $ticket->title }}</div>
           @php
             $timezone = session('user_timezone', config('app.timezone'));
             $cTime = \Carbon\Carbon::parse($ticket->created_at)->timezone($timezone);
           @endphp
-          <small class="text-muted">{{ $ticket->developer_name }} • {{ $cTime }}</small>
+          <small class="text-muted meta-line">
+            <span class="name">{{ $ticket->developer_name }}</span>
+            <span>•</span>
+            <span class="time">{{ $cTime }}</span>
+          </small>
         </div>
       </a>
     @endforeach
@@ -446,6 +483,9 @@
           <div class="info-label">Judul</div>
           <div class="info-title">{{ $selectedTicket->title }}</div>
         </div>
+        
+      </div>
+      <div class="submitter">
         <div>
           <div class="info-label">Status</div>
           <span class="text-nowrap status-badge {{ $selectedStatusClass }}">
@@ -453,9 +493,7 @@
             {{ $selectedTicket->status }}
           </span>
         </div>
-      </div>
-      <div class="submitter">
-  <img src="{{ $selectedTicket->support_avatar ?? asset('assetsadmin/img/avatars/default.png') }}" class="submitter-img" />
+        <img src="{{ $selectedTicket->support_avatar ?? asset('assetsadmin/img/avatars/default.png') }}" class="submitter-img" />
         <div class="submitter-details">
           <div class="submitter-name text-nowrap">{{ $selectedTicket->support_name }}</div>
           <div class="submitter-email text-nowrap">{{ $selectedTicket->support_email ?? '' }}</div>
@@ -605,7 +643,7 @@
 
           <!-- Row 2: attachment buttons -->
           <div class="d-flex gap-2 pt-2 flex-wrap">
-            <input type="file" name="attachment[]" id="attachment" class="d-none" accept=".docx,.pdf" multiple disabled>
+            <input type="file" name="attachment[]" id="attachment" class="d-none" accept=".docx,.pdf,.xlsx" multiple disabled>
             <button type="button" class="btn btn-sm btn-outline-secondary" title="Lampirkan File" @if($selectedTicket->status !== 'Closed') onclick="document.getElementById('attachment').click();" @endif>
               <i class="bi bi-paperclip"></i> File
             </button>
@@ -689,7 +727,7 @@
   const otherProf = "{{ $selectedTicket->support_avatar ?? asset('assetsadmin/img/avatars/default.png') }}" ;
   const userProf = "{{ $selectedTicket->developer_avatar ?? asset('assetsadmin/img/avatars/default.png') }}";
   const allowedImages = ['png', 'jpg', 'jpeg', 'webp'];
-  const allowedAtts = ['docx', 'pdf'];
+  const allowedAtts = ['docx', 'pdf','xlsx'];
   const maxSize = 10 * 1024 * 1024;
   const maxFiles = 4;
 
@@ -731,6 +769,9 @@
     }
     if (ext === "docx") { //Apparently a Docx is a zip so... extra precautions ahead!
         return await isDocx(f);
+    }
+    if (ext === "xlsx") {
+        return await isXlsx(f);
     }
 
     return false;

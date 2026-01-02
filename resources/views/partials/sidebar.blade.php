@@ -43,6 +43,15 @@
       display: none;
     }
   }
+
+  .shortable{
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
 </style>
 
 <div class="sidebar px-3">
@@ -69,9 +78,9 @@
   <div class="user-footer d-flex align-items-center gap-2">
     <button id="profileBtn" class="btn btn-light w-100 d-flex align-items-center justify-content-start gap-2 fw-semibold">
       <img src="{{ $user->profile_picture ?? asset('assetsadmin/img/avatars/default.png') }}" class="rounded-circle profile-img" alt="Profile Picture" />
-      <span>
-        {{ $user->name }}<br>
-        <span class="text-muted text-small">{{ $user->role ?? 'Web Developer' }}</span>
+      <span class="mx-auto">
+        <span class="shortable mx-auto">{{ $user->name }}</span>
+        <span class="shortable text-muted text-small mx-auto">{{ $user->role ?? 'Web Developer' }}</span>
       </span>
     </button>
   </div>

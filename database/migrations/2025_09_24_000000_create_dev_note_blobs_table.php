@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->string('file_name');
             $table->string('mime_type', 100)->default('text/plain');
             $table->unsignedBigInteger('size')->default(0);
-            $table->longBinary('blob')->nullable(); // simpan isi file sebagai blob
+            $table->binary('blob')->nullable(); // simpan isi file sebagai blob
             $table->timestamps();
 
             $table->index('user_id');

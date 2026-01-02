@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\DevTicket;
 use App\Models\DevChat;
 use App\Rules\StrictDocx;
+use App\Rules\StrictXlsx;
 //use App\Services\WhatsAppNotificationService;
 
 use Imagick;
@@ -192,10 +193,23 @@ class ChatDevController extends Controller
             $attachmentCount = DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['docx','pdf'])
+                ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
                 ->count();
 
             foreach ($request->file('attachment') as $idx => $file) {
+                $extension = strtolower($file->getClientOriginalExtension());
+                if ($extension === 'docx') {
+                    $rule = new StrictDocx();
+                    if (!$rule->passes('attachment.*', $file)) {
+                        continue;
+                    }
+                }
+                if ($extension === 'xlsx') {
+                    $rule = new StrictXlsx();
+                    if (!$rule->passes('attachment.*', $file)) {
+                        continue;
+                    }
+                }
                 $size = $file->getSize();
                 $newFileName = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' . 'dev_' .($attachmentCount + $idx + 1) . '_' . $file->getClientOriginalName();
                 //$filePath = $file->storeAs('chat_attachments', $newFileName, 'public');
@@ -356,10 +370,16 @@ class ChatDevController extends Controller
                             continue;
                         }
                     }
+                    if ($extension === 'xlsx') {
+                        $rule = new StrictXlsx();
+                        if (!$rule->passes('attachment.*', $file)) {
+                            continue;
+                        }
+                    }
                     $attachmentCount = DB::table('devAttachments')
                     ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                     ->where('devChats.ticket_id', $ticketId)
-                    ->whereIn('devAttachments.fileExtension', ['docx','pdf'])
+                    ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
                     ->count();
                     $size = $file->getSize();
                     // For now, we'll store the attachment info

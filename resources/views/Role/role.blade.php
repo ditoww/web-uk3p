@@ -51,7 +51,7 @@
                 <tr>
                     <td>{{ $role->id }}</td>
                     <td>{{ $role->roleName }}</td>
-                    <td>{{ \Carbon\Carbon::parse($role->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
+                    <td>{{ $role->created_at ? \Carbon\Carbon::parse($role->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') : '-' }}</td>
                     <td>
                 <div class="dropdown">
                     <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
@@ -88,7 +88,7 @@
                                 <div class="modal-body">
                                     <div class="mb-3">
                                         <label>Nama Role</label>
-                                        <input type="text" name="roleName" value="{{ $role->roleName }}" oninput="validateInput(this)" class="form-control @error('roleName') is-invalid @enderror">
+                                        <input type="text" name="roleName" id="update-{{$role->id}}-roleName" value="{{ $role->roleName }}" oninput="validateInput(this)" class="form-control @error('roleName') is-invalid @enderror">
                                         @error('roleName')
                                             <div style="color: red; font-size: 13px;">{{ $message }}</div>
                                         @enderror
@@ -196,10 +196,9 @@
   }
 
   function clearAjaxErrorsUpdate(id) {
-    const updateForm = document.querySelector(`#update-form-${id}`);
     const fields = ['roleName'];
     fields.forEach(function(name){
-      const input = updateForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(`update-${id}-${name}`);
       const span = document.getElementById(`err-update-${id}-${name}`);
       if (span) span.textContent = '';
       if (input) {
@@ -210,9 +209,8 @@
   }
 
   function showAjaxErrorsUpdate(errors, id) {
-    const updateForm = document.querySelector(`#update-form-${id}`);
     Object.keys(errors).forEach(function(name){
-      const input = updateForm.querySelector(`[name="${name}"]`);
+      const input = document.getElementById(`update-${id}-${name}`);
       const span = document.getElementById(`err-update-${id}-${name}`);
       if (span) span.textContent = errors[name][0];
       if (input) {

@@ -149,7 +149,7 @@
         @endif
       </td>
       <td>{{ $p->roleName ?? '-' }}</td>
-      <td>{{ \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
+      <td>{{ $p->created_at ? \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') : '-' }}</td>
 
 
       <td>
@@ -235,7 +235,7 @@
                                 <div class="col mb-3">
                                   <label for="nameLarge" class="form-label">Username</label>
                                   <input type="text" name="username" oninput="validateUserInput(this)" class="form-control @error('username') is-invalid @enderror" placeholder="DevOne" />
-                                  <span id="error-message-user" style="color: red;"></span>
+                                  <span id="error-message-user" style="color: red; font-size: 13px;"></span>
                                   @error('username')
                                     <span id="byp-username" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
@@ -248,7 +248,7 @@
                                 <div class="col mb-0">
                                   <label for="dobLarge" class="form-label">Nama</label>
                                   <input type="text" id="inputHuruf" oninput="validateInput(this)" name="nama" class="form-control @error('nama') is-invalid @enderror" placeholder="Developer One" />
-                                  <span id="error-message" style="color: red;"></span>
+                                  <span id="error-message" style="color: red; font-size: 13px;"></span>
                                   @error('nama')
                                     <span id="byp-nama" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
@@ -282,12 +282,12 @@
 
                               <!-- Hidden datetime -->
                               <input type="datetime-local" id="tgl" hidden name="tgl" />
-
+                              <input type="hidden" name="role" id="role">
                               <!-- Role -->
                               <div class="row g-2 mb-3">
                                 <div class="col mb-0">
                                   <label for="emailLarge" class="form-label">Role</label>
-                                  <select name="role" class="select2 form-select @error('role') is-invalid @enderror">
+                                  <select id="role_select" class="select2 form-select @error('role') is-invalid @enderror">
                                     @foreach ($roles as $r)
                                         <option value="{{ $r->id }}">{{ $r->roleName }}</option>
                                     @endforeach
@@ -405,7 +405,7 @@
                           <div class="row g-2 mb-3">
                             <div class="col mb-0">
                               <label for="emailLarge" class="form-label">Dibuat Pada</label>
-                              <input type="datetime" class="form-control" value="{{$p->created_at}}" readonly placeholder="" />
+                              <input type="datetime" class="form-control" value="{{$p->created_at ?? '-'}}" readonly placeholder="" />
                             </div>
                           </div>
 
@@ -507,11 +507,26 @@ function validateUserInput(inputElement) {
   }
 }
 let lastValidFile = null;
+const fileInput = document.querySelector('.account-file-input');
 const allowedImages = ['png', 'jpg', 'jpeg'];
 const maxSize = 5 * 1024 * 1024;
 function getExt(s){
   return s.split('.').pop().toLowerCase();
 }
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const selector = document.getElementById('role_select');
+    const role = document.getElementById('role');
+
+    // init value
+    role.value = selector.value;
+
+    selector.addEventListener('change', function () {
+        if (!role.readOnly)
+        role.value = this.value;
+    });
+});
 
 async function allowedIMG(f){
   if (!f) return false;
@@ -566,11 +581,25 @@ async function handleFile(element, file) {
     return;
   }
 
-  lastValidFile = file;
+  if (fileInput.dataset.stopper === "not active") {
+    lastValidFile = file;
 
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  element.files = dt.files;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    element.files = dt.files;
+
+    return;
+  }
+  else if (fileInput.dataset.stopper === "active") {
+    if (lastValidFile) {
+        const dt = new DataTransfer();
+        dt.items.add(lastValidFile);
+        element.files = dt.files;
+    } else {
+        element.value = "";
+    }
+    return;
+  }
 }
 document.addEventListener('DOMContentLoaded', function () {
 (function () {
@@ -589,7 +618,7 @@ if (accountUserImage) {
   };*/
 
   fileInput.addEventListener('change', async function (e) {
-    if (fileInput.dataset.stopper === "active") return;
+    e.preventDefault();
     const file = e.target.files && e.target.files[0];
     await handleFile(fileInput, file);
     if (lastValidFile) {
@@ -598,8 +627,9 @@ if (accountUserImage) {
   });
 
   resetFileInput.onclick = () => {
-    if (fileInput.dataset.stopper === "active") return;
+    e.preventDefault();
     fileInput.value = '';
+    lastValidFile = null;
     accountUserImage.src = resetImage;
   };
 }
@@ -768,9 +798,10 @@ $("#copyTable").on('click', function() {
 
 <script>
   const fields = ['username','nama','email','nohp','role','pass','upload'];
-  const fileInput = document.querySelector('.account-file-input');
   function clearAjaxErrors() { 
     fileInput.dataset.stopper = "active";
+    document.getElementById('error-message').textContent = '';
+    document.getElementById('error-message-user').textContent = '';
     fields.forEach(function(name){
       const input = document.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
@@ -805,6 +836,10 @@ $("#copyTable").on('click', function() {
       if (input) 
         input.readOnly = false;
     });
+    const selector = document.getElementById('role_select');
+    const role = document.getElementById('role');
+    //when value is changed, immediately assign it
+    role.value = selector.value;
   }
 
   function validateAndSubmit(e) {

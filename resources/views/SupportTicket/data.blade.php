@@ -124,7 +124,7 @@
         @endif
       </td>
       {{-- <td>{{ $p->toRole }}</td> --}}
-      <td>{{ \Carbon\Carbon::parse(data_get($p, 'created_at', now()))->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
+      <td>{{ $p->created_at ? \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') : '-' }}</td>
       <td>
         <button class="bg-transparent border-0 text-danger ssdele" href="javascript:void(0);" data-id="{{ data_get($p, 'id') }}"><i class="ti ti-trash me-1"></i></button>
       </td>

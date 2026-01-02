@@ -23,7 +23,6 @@ return new class extends Migration
             $table->string('phone_otp')->nullable();
             $table->string('phone_otp_expires_at')->nullable();
             $table->timestamp('phone_verified_at')->nullable();
-            $table->string('password');
             $table->tinyInteger('isDeleted')->default(0);
             $table->timestamps();
         });

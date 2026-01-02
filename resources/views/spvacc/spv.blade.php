@@ -135,7 +135,7 @@
           <span class="badge rounded-pill" style="background-color: #fef3c7; color: #92400e; padding: 6px 12px; font-weight: 600;">Away</span>
         @endif
       </td>
-      <td>{{ \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
+      <td>{{ $p->created_at ? \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') : '-' }}</td>
       <td>
         @if(Auth::user()->isSuperAdmin())
         <div class="dropdown">
@@ -209,7 +209,7 @@
                                   @error('upload')
                                     <div id="byp-upload" style="color: red; font-size: 13px;">{{ $message }}</div>
                                   @enderror
-                                  <div id="err-upload" class="text-danger small"></div>
+                                  <div id="err-upload" style="color: red; font-size: 13px;"></div>
                                 </div>
                               </div>
 
@@ -217,11 +217,11 @@
                               <div class="col mb-3">
                                 <label for="nameLarge" class="form-label">Username</label>
                                 <input type="text" name="username" oninput="validateUserInput(this)" class="form-control @error('username') is-invalid @enderror" placeholder="SPVOne" />
-                                <span id="error-message-user" style="color: red;"></span>
+                                <span id="error-message-user" style="color: red; font-size: 13px;"></span>
                                 @error('username')
                                   <span id="byp-username" style="color: red; font-size: 13px;">{{ $message }}</span>
                                 @enderror
-                                <div id="err-username" class="text-danger small"></div>
+                                <div id="err-username" style="color: red; font-size: 13px;"></div>
                               </div>
                             </div>
 
@@ -230,11 +230,11 @@
                               <div class="col mb-0">
                                 <label for="dobLarge" class="form-label">Nama</label>
                                 <input type="text" id="inputHuruf" oninput="validateInput(this)" name="nama" class="form-control @error('nama') is-invalid @enderror" placeholder="SPV One" />
-                                <span id="error-message" style="color: red;"></span>
+                                <span id="error-message" style="color: red; font-size: 13px;"></span>
                                 @error('nama')
                                   <span id="byp-nama" style="color: red; font-size: 13px;">{{ $message }}</span>
                                 @enderror
-                                <div id="err-nama" class="text-danger small"></div>
+                                <div id="err-nama" style="color: red; font-size: 13px;"></div>
                               </div>
                             </div>
 
@@ -246,7 +246,7 @@
                                 @error('email')
                                   <span id="byp-email" style="color: red; font-size: 13px;">{{ $message }}</span>
                                 @enderror
-                                <div id="err-email" class="text-danger small"></div>
+                                <div id="err-email" style="color: red; font-size: 13px;"></div>
                               </div>
 
                               <div class="col mb-0">
@@ -258,7 +258,7 @@
                                 @error('nohp')
                                   <span id="byp-nohp" style="color: red; font-size: 13px;">{{ $message }}</span>
                                 @enderror
-                                <div id="err-nohp" class="text-danger small"></div>
+                                <div id="err-nohp" style="color: red; font-size: 13px;"></div>
                               </div>
                             </div>
 
@@ -286,7 +286,7 @@
                                   @error('pass')
                                     <span id="byp-pass" style="color: red; font-size: 13px;">{{ $message }}</span>
                                   @enderror
-                                  <div id="err-pass" class="text-danger small"></div>
+                                  <div id="err-pass" style="color: red; font-size: 13px;"></div>
                                 </div>
                               </div>
                             </div>
@@ -383,7 +383,7 @@
                           <div class="row g-2 mb-3">
                             <div class="col mb-0">
                               <label for="emailLarge" class="form-label">Dibuat Pada</label>
-                              <input type="datetime" class="form-control" value="{{$p->created_at}}" readonly placeholder="" />
+                              <input type="datetime" class="form-control" value="{{$p->created_at ?? '-'}}" readonly placeholder="" />
                             </div>
                           </div>
                         </div>
@@ -447,6 +447,7 @@ float: right;
 @include('partials.fileverifier')
 <script>
 let lastValidFile = null;
+const fileInput = document.querySelector('.account-file-input');
 const allowedImages = ['png', 'jpg', 'jpeg'];
 const maxSize = 5 * 1024 * 1024;
 function getExt(s){
@@ -473,7 +474,7 @@ async function allowedIMG(f){
 }
 async function handleFile(element, file) {
   if (!file) {
-    if (lastValidFile) {
+    if (lastValidFile && fileInput.dataset.stopper === "not active") {
       const dt = new DataTransfer();
       dt.items.add(lastValidFile);
       element.files = dt.files;
@@ -506,11 +507,25 @@ async function handleFile(element, file) {
     return;
   }
 
-  lastValidFile = file;
+ if (fileInput.dataset.stopper === "not active") {
+    lastValidFile = file;
 
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  element.files = dt.files;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    element.files = dt.files;
+
+    return;
+  }
+  else if (fileInput.dataset.stopper === "active") {
+    if (lastValidFile) {
+        const dt = new DataTransfer();
+        dt.items.add(lastValidFile);
+        element.files = dt.files;
+    } else {
+        element.value = "";
+    }
+    return;
+  }
 }
 function duplicationPrevention(event, id) { //prevents double submission and submitting on pages you already submitted.
   event.preventDefault();
@@ -578,7 +593,6 @@ if (accountUserImage) {
   };*/
 
   fileInput.addEventListener('change', async function (e) {
-    if (fileInput.dataset.stopper === "active") return;
     const file = e.target.files && e.target.files[0];
     await handleFile(fileInput, file);
     if (lastValidFile) {
@@ -587,8 +601,8 @@ if (accountUserImage) {
   });
 
   resetFileInput.onclick = () => {
-    if (fileInput.dataset.stopper === "active") return;
     fileInput.value = '';
+    lastValidFile = null;
     accountUserImage.src = resetImage;
   };
 }
@@ -746,9 +760,10 @@ $("#copyTable").on('click', function() {
 
 <script>
   const fields = ['username','nama','email','nohp','pass','upload'];
-  const fileInput = document.querySelector('.account-file-input');
   function clearAjaxErrorsSpv() {
     fileInput.dataset.stopper = "active";
+    document.getElementById('error-message').textContent = '';
+    document.getElementById('error-message-user').textContent = '';
     fields.forEach(function(name){
       const input = document.querySelector(`[name="${name}"]`);
       const span = document.getElementById(`err-${name}`);
@@ -793,7 +808,6 @@ $("#copyTable").on('click', function() {
     fd.append('_token', '{{ csrf_token() }}');
 
     btn.disabled = true;
-    btn.dataset.prevText = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
 
     $.ajax({
@@ -819,7 +833,7 @@ $("#copyTable").on('click', function() {
         }
       },
       complete: function() {
-        btn.innerHTML = btn.dataset.prevText || 'Tambah Data';
+        btn.innerHTML = 'Tambah Data';
       }
     });
   }

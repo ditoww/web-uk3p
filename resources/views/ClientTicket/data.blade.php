@@ -108,7 +108,7 @@
       <td>{{$p->user->username}}</td>
       <td>{{$p->support->username ?? '-'}}</td>
       <td>{{$p->application->appName}}</td>
-      <td>{{ \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') }}</td>
+      <td>{{ $p->created_at ? \Carbon\Carbon::parse($p->created_at)->timezone(session('user_timezone', config('app.timezone')))->format('d-m-Y H:i') : '-' }}</td>
       <td>
         @php
           $status = $p->status;
