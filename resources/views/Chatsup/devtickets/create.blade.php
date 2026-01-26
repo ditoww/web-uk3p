@@ -59,11 +59,11 @@
           <label class="form-label">Sumber Komplain <span class="text-danger">*</span></label>
           <div class="d-flex flex-wrap gap-4">
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="case_type" id="case_type_ticket" value="ticket" {{ old('case_type','external') === 'ticket' ? 'checked' : '' }}>
+              <input class="form-check-input" type="radio" name="case_type" id="case_type_ticket" value="ticket" {{ old('case_type') === 'ticket' ? 'checked' : '' }}>
               <label class="form-check-label" for="case_type_ticket">Terkait Ticket Client</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="case_type" id="case_type_external" value="external" {{ old('case_type') === 'external' ? 'checked' : '' }}>
+              <input class="form-check-input" type="radio" name="case_type" id="case_type_external" value="external" {{ old('case_type','external') === 'external' ? 'checked' : '' }}>
               <label class="form-check-label" for="case_type_external">Komplain di luar sistem (telepon, dsb.)</label>
             </div>
           </div>
