@@ -523,7 +523,7 @@
 
   function getCaseType() {
     var checked = document.querySelector('input[name="case_type"]:checked');
-    return checked ? checked.value : 'ticket';
+    return checked ? checked.value : 'external';
   }
 
   function clearAjaxErrors() {
