@@ -799,8 +799,8 @@
   // Config: set to false to hide avatars and avoid sending avatar URLs to Firestore
   window.chatConfig = { showAvatar: false, sendAvatar: false };
 </script>
-<script src="{{ asset('js/realtime-chat.js') }}"></script>
-<script src="{{ asset('js/chatdev.js') }}"></script>
+<script src="{{ asset('js/realtime-chat-min.js') }}"></script>
+<script src="{{ asset('js/chatdev-min.js') }}"></script>
 
 <script>
     window.ticketStatus = "{{ $selectedTicket->status }}";

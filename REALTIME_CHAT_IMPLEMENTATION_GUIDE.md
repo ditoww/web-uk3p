@@ -66,8 +66,8 @@ Panduan implementasi real-time chat untuk semua halaman chat menggunakan Firebas
 
 ### **3. Script Loading Order**
 ```html
-<script src="{{ asset('js/realtime-chat.js') }}"></script>
-<script src="{{ asset('js/chatdev.js') }}"></script>
+<script src="{{ asset('js/realtime-chat-min.js') }}"></script>
+<script src="{{ asset('js/chatdev-min.js') }}"></script>
 ```
 
 ### **4. CSRF Token**

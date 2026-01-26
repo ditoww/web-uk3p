@@ -26,7 +26,7 @@ The real-time chat system allows developers and support staff to communicate in 
    - Configuration setup
    - Global Firebase instance
 
-2. **RealtimeChat Class** (`public/js/realtime-chat.js`)
+2. **RealtimeChat Class** (`public/js/realtime-chat-min.js`)
    - Main chat functionality
    - Firebase Firestore integration
    - Message handling and display

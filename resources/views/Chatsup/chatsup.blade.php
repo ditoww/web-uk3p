@@ -468,7 +468,19 @@
           : route('Chatsup.chatsup', ['ticket_dev' => $ticket->id]) }}"
          class="text-decoration-none text-dark">
         <div class="ticket-card mb-2 p-2 rounded {{ $isActive ? 'bg-light' : '' }}" id="tc-{{ $ticket->id }}">
-          <span class="badge {{ $statusClass }} badge-status mb-1">{{ $ticket->status }}</span>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge {{ $statusClass }} badge-status">
+              {{ $ticket->status }}
+            </span>
+            <button class="btn btn-sm btn-warning" id="copyTicket" data-ticket-id="{{$ticket->id}}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-copy" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                  d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z" />
+              </svg>
+              Copy
+            </button>
+          </div>
           <div class="fw-semibold text-primary">TK-{{ \Carbon\Carbon::parse($ticket->created_at)->format('Y') }}-{{ str_pad($ticket->id, 3, '0', STR_PAD_LEFT) }}</div>
           <div class="mb-1 ticket-title">{{ $ticket->title }}</div>
           @php
@@ -817,7 +829,7 @@
     return false;
   }
 </script>
-<script src="{{ asset('js/realtime-chat.js') }}"></script>
-<script src="{{ asset('js/chatdev.js') }}"></script>
+<script src="{{ asset('js/realtime-chat-min.js') }}"></script>
+<script src="{{ asset('js/chatdev-min.js') }}"></script>
 @endsection
 
