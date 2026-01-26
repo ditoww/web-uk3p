@@ -59,7 +59,7 @@
           <label class="form-label">Sumber Komplain <span class="text-danger">*</span></label>
           <div class="d-flex flex-wrap gap-4">
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="case_type" id="case_type_ticket" value="ticket" {{ old('case_type','ticket') === 'ticket' ? 'checked' : '' }}>
+              <input class="form-check-input" type="radio" name="case_type" id="case_type_ticket" value="ticket" {{ old('case_type','external') === 'ticket' ? 'checked' : '' }}>
               <label class="form-check-label" for="case_type_ticket">Terkait Ticket Client</label>
             </div>
             <div class="form-check">
