@@ -35,7 +35,7 @@ class AdminController extends Controller
             'status' => 'nullable|in:active,Away',
             'upload' => 'nullable|mimes:jpg,png,jpeg|max:5120',
         ];
-        
+
         $messages = [
             'username.required' => 'Mohon isi username untuk Admin.',
             'username.unique' => 'Username tersebut sudah dipakai.',
@@ -113,7 +113,7 @@ class AdminController extends Controller
         $user->profile_picture = $gambarUrl;
         $user->save();
 
-    return redirect()->route('admin.admin')->with('success', 'Data Akun Telah Ditambahkan!');
+        return redirect()->route('admin.admin')->with('success', 'Data Akun Telah Ditambahkan!');
     }
 
     public function hapusData($username)
@@ -169,6 +169,7 @@ class AdminController extends Controller
         $request->validate([
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
+            'password' => 'required|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
             'upload' => 'nullable|mimes:jpg,jpeg,png|max:5120'
         ], [
@@ -176,6 +177,7 @@ class AdminController extends Controller
             'nama.regex' => 'Mama lengkap hanya menggunakan huruf besar, huruf kecil, dan spasi.',
             'email.email' => 'Email tersebut tidak valid.',
             'email.max' => 'Email perlu 191 huruf atau kebawah.',
+            'password.max' => 'Password harus dibawah 192 huruf.',
             'nohp.regex' => 'Nomor HP tidak valid.',
             'upload.max' => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
             'upload.mimes' => 'Gambar Profile Picture harus jpg, png, atau jpeg.'
@@ -231,6 +233,7 @@ class AdminController extends Controller
         }
 
         $akun->name = $request->nama;
+        $akun->password = $request->password;
         $akun->email = $request->email ?: null;
         $akun->phone_number = $request->nohp ?: null;
         $akun->updated_at = now();
