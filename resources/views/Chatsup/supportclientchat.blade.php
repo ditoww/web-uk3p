@@ -796,7 +796,7 @@
     return false;
   }
 </script>
-<script src="{{ asset('js/chatdev-min.js') }}"></script>
+<script src="{{ asset('js/chatdev-min.js') }}" defer></script>
 <script>
   // Enable Enter-to-send for client chat (no realtime)
   document.addEventListener('DOMContentLoaded', function () {

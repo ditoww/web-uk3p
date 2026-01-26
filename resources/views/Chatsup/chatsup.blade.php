@@ -829,7 +829,7 @@
     return false;
   }
 </script>
-<script src="{{ asset('js/realtime-chat-min.js') }}"></script>
-<script src="{{ asset('js/chatdev-min.js') }}"></script>
+<script src="{{ asset('js/realtime-chat-min.js') }}" defer></script>
+<script src="{{ asset('js/chatdev-min.js') }}" defer></script>
 @endsection
 
