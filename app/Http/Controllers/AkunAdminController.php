@@ -43,7 +43,7 @@ class AkunAdminController extends Controller
             'status' => 'nullable|in:active,Away',
             'upload' => 'nullable|mimes:jpg,png,jpeg|max:5120',
         ];
-        
+
         $messages = [
             'username.required' => 'Mohon isi username untuk Developer.',
             'username.unique' => 'Username tersebut sudah dipakai.',
@@ -124,7 +124,7 @@ class AkunAdminController extends Controller
         $user->profile_picture = $gambarUrl;
         $user->save();
 
-    return redirect()->route('akunadmin')->with('success', 'Data Akun Telah Ditambahkan!');
+        return redirect()->route('akunadmin')->with('success', 'Data Akun Telah Ditambahkan!');
     }
 
     public function hapusData($username)
@@ -188,6 +188,7 @@ class AkunAdminController extends Controller
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
             'role' => 'required|exists:devRoles,id',
+            'password' => 'required',
             'upload' => 'nullable|mimes:jpg,jpeg,png|max:5120'
         ], [
             'nama.required' => 'Mohon isi nama lengkap untuk Developer.',
@@ -196,6 +197,7 @@ class AkunAdminController extends Controller
             'email.max' => 'Email perlu 191 huruf atau kebawah.',
             'nohp.regex' => 'Nomor HP tersebut tidak valid.',
             'role.required' => 'Mohon pilih sebuah role untuk Developer.',
+            'password.required' => 'Mohon isi password untuk Developer.',
             'role.exists' => 'Role tersebut tidak tersimpan di database.',
             'upload.max' => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
             'upload.mimes' => 'Gambar Profile Picture harus jpg, png, atau jpeg.'
@@ -246,10 +248,11 @@ class AkunAdminController extends Controller
 
             $imagick->clear();
             $imagick->destroy();
-            
+
             $akun->profile_picture = asset('GambarProfileAdmin/' . $filename);
         }
 
+        $akun->password = Hash::make($request->password);
         $akun->name = $request->nama;
         $akun->email = $request->email;
         $akun->phone_number = $request->nohp;

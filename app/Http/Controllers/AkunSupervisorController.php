@@ -34,7 +34,7 @@ class AkunSupervisorController extends Controller
             'status' => 'nullable|in:active,Away',
             'upload' => 'nullable|mimes:jpg,png,jpeg|max:5120',
         ];
-        
+
         $messages = [
             'username.required' => 'Mohon isi username untuk Supervisor.',
             'username.unique' => 'Username tersebut sudah dipakai.',
@@ -55,7 +55,7 @@ class AkunSupervisorController extends Controller
         $validator = Validator::make($request->only(array_keys($rules)), $rules, $messages);
 
         if ($validator->fails()) return redirect()->route('akun.supervisor')->withErrors($validator)->withInput()->with('error', "Terdapat sebuah masalah dalam penambahan akun. Klik tombol Tambah Data untuk mengetahui masalahnya.");
-        
+
         $gambarUrl = null;
         if ($request->hasFile('upload')) {
             $gambar = $request->file('upload');
@@ -169,11 +169,13 @@ class AkunSupervisorController extends Controller
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
-            'upload' => 'nullable|mimes:jpg,jpeg,png|max:5120'
+            'upload' => 'nullable|mimes:jpg,jpeg,png|max:5120',
+            'password' => 'required'
         ], [
             'nama.required' => 'Mohon isi nama lengkap untuk Supervisor.',
             'nama.regex' => 'Mama lengkap hanya menggunakan huruf besar, huruf kecil, dan spasi.',
             'email.email' => 'Email tersebut tidak valid.',
+            'password.required' => 'Mohon isi password untuk Supervisor.',
             'email.max' => 'Email perlu 191 huruf atau kebawah.',
             'nohp.regex' => 'Nomor HP tersebut tidak valid.',
             'upload.max' => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
@@ -228,6 +230,7 @@ class AkunSupervisorController extends Controller
             $akun->profile_picture = asset('GambarProfileAdmin/' . $filename);
         }
 
+        $akun->password = Hash::make($request->password);
         $akun->name = $request->nama;
         $akun->email = $request->filled('email') ? $request->email : null;
         $akun->phone_number = $request->filled('nohp') ? $request->nohp : null;

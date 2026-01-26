@@ -39,6 +39,15 @@
                     <input type="text" name="username" class="form-control" value="{{ $akun->username }}" readonly>
                 </div>
 
+                <!-- Password -->
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" value="{{ $akun->password ?? '' }}">
+                    @error('password')
+                        <span style="color: red; font-size: 13px;">{{ $message }}</span>
+                    @enderror
+                </div>
+
                 <!-- Nama -->
                 <div class="mb-3">
                     <label for="nama" class="form-label">Nama</label>

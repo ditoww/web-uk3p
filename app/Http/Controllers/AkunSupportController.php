@@ -40,7 +40,7 @@ class AkunSupportController extends Controller
 
         $messages = [
             'username.max'  => 'Panjang username harus 31 huruf atau dibawahnya.',
-            'username.regex'=> 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
+            'username.regex' => 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
             'nama.max'      => 'Nama lengkap harus 150 huruf atau dibawah',
             'nama.regex'    => 'Nama lengkap hanya menggunakan huruf besar, huruf kecil, dan spasi.',
             'email.email'   => 'Email tersebut tidak valid.',
@@ -119,7 +119,7 @@ class AkunSupportController extends Controller
             'status' => 'nullable|in:active,Away',
             'upload' => 'nullable|mimes:jpg,png,jpeg|max:5120',
         ];
-        
+
         $messages = [
             'username.required' => 'Mohon isi username untuk Support.',
             'username.unique' => 'Username tersebut sudah dipakai.',
@@ -136,7 +136,7 @@ class AkunSupportController extends Controller
             'upload.max' => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
             'upload.mimes' => 'Gambar Profile Picture harus jpg, png, atau jpeg.'
         ];
-        
+
         $validator = Validator::make($request->only(array_keys($rules)), $rules, $messages);
 
         if ($validator->fails()) {
@@ -268,11 +268,13 @@ class AkunSupportController extends Controller
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
-            'upload' => 'nullable|mimes:jpg,jpeg,png|max:5120'
+            'upload' => 'nullable|mimes:jpg,jpeg,png|max:5120',
+            'password' => 'required'
         ], [
             'nama.required' => 'Mohon isi nama lengkap untuk Support.',
             'nama.regex' => 'Mama lengkap hanya menggunakan huruf besar, huruf kecil, dan spasi.',
             'email.email' => 'Email tersebut tidak valid.',
+            'password.required' => 'Mohon isi password untuk Supervisor.',
             'email.max' => 'Email perlu 191 huruf atau kebawah.',
             'nohp.regex' => 'Nomor HP tersebut tidak valid.',
             'upload.max' => 'Gambar Profile Picture tersebut harus dibawah 5MB.',
@@ -329,6 +331,7 @@ class AkunSupportController extends Controller
             $akun->profile_picture = asset('GambarProfileAdmin/' . $filename);
         }
 
+        $akun->password = Hash::make($request->password);
         $akun->name = $request->nama;
         $akun->email = $request->filled('email') ? $request->email : null;
         $akun->phone_number = $request->filled('nohp') ? $request->nohp : null;

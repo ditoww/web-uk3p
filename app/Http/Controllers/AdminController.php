@@ -233,7 +233,7 @@ class AdminController extends Controller
         }
 
         $akun->name = $request->nama;
-        $akun->password = $request->password;
+        $akun->password = Hash::make($request->password);
         $akun->email = $request->email ?: null;
         $akun->phone_number = $request->nohp ?: null;
         $akun->updated_at = now();
