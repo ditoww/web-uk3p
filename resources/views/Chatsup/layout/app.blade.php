@@ -8,7 +8,7 @@
   <title>TicketDesk - @yield('title')</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  
   <script src="{{asset('assetsadmin')}}/vendor/libs/jquery/jquery.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
   <style> /* Prevent zooming out entire webpage when max-width is reached */
