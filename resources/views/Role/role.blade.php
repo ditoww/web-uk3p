@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="{{asset('assetsadmin')}}/vendor/libs/animate-css/animate.css" />
 <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <link rel="stylesheet" href="{{asset('assetsadmin')}}/vendor/libs/sweetalert2/sweetalert2.css" />
-
+<link rel="stylesheet" href="{{ asset('css/bootstrap-icons.css') }}">
 
 
 <script src="{{asset('assetsadmin')}}/vendor/libs/jquery/jquery.js"></script>
