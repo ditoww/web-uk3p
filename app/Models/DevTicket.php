@@ -32,4 +32,15 @@ class DevTicket extends Model
     {
         return $this->belongsTo(DevRole::class, 'roleID');
     }
+
+    public function chat()
+    {
+        return $this->hasOne(DevChat::class, 'ticket_id', 'id')
+            ->oldest(); // berdasarkan created_at
+    }
+
+    public function get_single_data($id)
+    {
+        return $this->with(['chat', 'chat.attachment'])->findOrFail($id);
+    }
 }

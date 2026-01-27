@@ -54,7 +54,7 @@ class SupportClientChatController extends Controller
             'title.max' => 'Judul terlalu panjang. Mohon memendekkan judul tersebut.',
             'description.required' => 'Mohon isi deskripsi permasalahan pada tiket tersebut.',
             'description.max' => 'Deskripsi tersebut melewati batasan huruf 10000 karakter.',
-            'image.mimes'=> 'File tersebut tidak menggunakan format yang dapat di-support.',
+            'image.mimes' => 'File tersebut tidak menggunakan format yang dapat di-support.',
             'image.max' => 'Ukuran maksimal file harus dibawah 5MB.'
         ];
 
@@ -120,12 +120,12 @@ class SupportClientChatController extends Controller
             $count = $isImage ? DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['jpg','jpeg','png','webp'])
+                ->whereIn('devAttachments.fileExtension', ['jpg', 'jpeg', 'png', 'webp'])
                 ->count()
                 :   DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
+                ->whereIn('devAttachments.fileExtension', ['docx', 'pdf', 'xlsx'])
                 ->count();
 
             $now = now();
@@ -188,7 +188,7 @@ class SupportClientChatController extends Controller
                     'updated_at' => now(),
                 ]);
             } else {
-                $img->move(public_path('chat_attachments/'), $fileName);   
+                $img->move(public_path('chat_attachments/'), $fileName);
                 $filePath = asset('chat_attachments/' . $fileName);
                 DB::table('devAttachments')->insert([
                     'chatID' => $chatId,
@@ -206,7 +206,182 @@ class SupportClientChatController extends Controller
             ->with('success', 'Dev ticket berhasil dibuat.');
     }
 
-    public function validateDevTicket(Request $request) {
+    public function copyDevTicket(Request $request)
+    {
+        $rules = [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:10000',
+            // Naikkan limit ke 5MB
+            'image' => 'nullable|mimes:jpg,jpeg,png,webp,xlsx,docx,pdf|max:5120',
+            'ticket_id' => 'required'
+        ];
+
+        $messages = [
+            'title.required' => 'Mohon isi judul tiket tersebut.',
+            'title.string' => 'Mohon isi judul yang valid.',
+            'title.max' => 'Judul terlalu panjang. Mohon memendekkan judul tersebut.',
+            'description.required' => 'Mohon isi deskripsi permasalahan pada tiket tersebut.',
+            'description.max' => 'Deskripsi tersebut melewati batasan huruf 10000 karakter.',
+            'image.mimes' => 'File tersebut tidak menggunakan format yang dapat di-support.',
+            'image.max' => 'Ukuran maksimal file harus dibawah 5MB.'
+        ];
+
+        $validated = $request->validate($rules, $messages);
+
+        $supportId = Auth::id();
+        $title = $validated['title'];
+        $desc = $validated['description'];
+        $devTicket = DB::table('devTickets')->where('id', $validated['ticket_id'])->first();
+        $parentId = $devTicket->copyId;
+        $copyKe = DB::table('devTickets')->where('id', $devTicket->id)->orderBy('copyCount', 'desc')->first();
+        $copyCount = 0;
+        if ($parentId == 0) {
+            $cariData = DB::table('devTickets')->where('copyId', $devTicket->id)->orderBy('copyCount', 'desc')->first();
+            if ($cariData) {
+                $copyCount = $cariData->copyCount + 1;
+            } else {
+                $copyCount = 1;
+            }
+        } else {
+            $copyCount = $copyKe->copyCount + 1;
+        }
+
+        $roleId = $devTicket->roleID; // sudah divalidasi exists:devRoles,id
+
+        $ticketId = DB::table('devTickets')->insertGetId([
+            'supportID' => $supportId,
+            'devID' => null,
+            'roleID' => $roleId,
+            'title' => $title,
+            'status' => 'Open',
+            'link' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+            'copyId' => $devTicket->copyId == 0 ? $devTicket->id : $devTicket->copyId,
+            'copyCount' => $copyCount,
+        ]);
+
+        $chatId = DB::table('devChats')->insertGetId([
+            'ticket_id' => $ticketId,
+            'sender' => 'support',
+            'response' => $desc,
+            'check' => 'sent',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($request->hasFile('image')) {
+            $img = $request->file('image');
+            // Safety hard limit (jika php.ini lebih besar)
+            if ($img->getSize() > 5 * 1024 * 1024) {
+                return back()->withErrors(['image' => 'File melebihi 5MB'])->withInput();
+            }
+            $size = $img->getSize();
+            $ext = strtolower($img->getClientOriginalExtension());
+            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
+            if ($ext === 'docx') {
+                $rule = new StrictDocx();
+                if (!$rule->passes('image.*', $img)) {
+                    return back()->withErrors(['image' => 'File tidak valid'])->withInput();
+                }
+            }
+            if ($ext === 'xlsx') {
+                $rule = new StrictXlsx();
+                if (!$rule->passes('image.*', $img)) {
+                    return back()->withErrors(['image' => 'File tidak valid'])->withInput();
+                }
+            }
+            $count = $isImage ? DB::table('devAttachments')
+                ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
+                ->where('devChats.ticket_id', $ticketId)
+                ->whereIn('devAttachments.fileExtension', ['jpg', 'jpeg', 'png', 'webp'])
+                ->count()
+                :   DB::table('devAttachments')
+                ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
+                ->where('devChats.ticket_id', $ticketId)
+                ->whereIn('devAttachments.fileExtension', ['docx', 'pdf', 'xlsx'])
+                ->count();
+
+            $now = now();
+            $chatCreated = $now->clone();
+            $datePrefix = 'TK-' . \Carbon\Carbon::parse($chatCreated)->format('Ymd');
+
+            $fileName = $datePrefix . '-' . $chatId . '_' . ($count + 1) . '_' . $img->getClientOriginalName();
+            $targetDir = $isImage ? public_path('chat_images') : public_path('chat_attachments');
+            $targetPath = $targetDir . '/' . $fileName;
+
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0775, true);
+            }
+            if ($isImage) {
+                $imagick = new \Imagick();
+                $imagick->readImage($img->getRealPath());
+                $imagick->stripImage();
+
+                $w = $imagick->getImageWidth();
+                $h = $imagick->getImageHeight();
+                $maxDim = 1920;
+
+                if ($w > $maxDim || $h > $maxDim) {
+                    $ratio = min($maxDim / $w, $maxDim / $h);
+                    $imagick->resizeImage((int)($w * $ratio), (int)($h * $ratio), \Imagick::FILTER_LANCZOS, 1);
+                }
+                // Extra downscale kualitas jika masih besar >1.5MB
+                if ($ext === 'jpg' || $ext === 'jpeg') {
+                    $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                    $imagick->setImageCompressionQuality(82);
+                    if ($size > 1500 * 1024) {
+                        $imagick->setImageCompressionQuality(75);
+                    }
+                } elseif ($ext === 'webp') {
+                    $imagick->setImageCompressionQuality($size > 1500 * 1024 ? 72 : 82);
+                } elseif ($ext === 'png') {
+                    $imagick->setOption('png:compression-level', '9');
+                    $imagick->setOption('png:compression-filter', '5');
+                    if (($w * $h) > (1280 * 1280)) {
+                        $imagick->quantizeImage(256, \Imagick::COLORSPACE_RGB, 0, false, false);
+                    }
+                }
+
+                if (!$imagick->writeImage($targetPath)) {
+                    throw new \Exception('Imagick failed to write image.');
+                }
+
+                $imagick->clear();
+                $imagick->destroy();
+
+                $filePath = asset('chat_images/' . $fileName);
+                $finalSize = @filesize($targetPath) ?: $size;
+                DB::table('devAttachments')->insert([
+                    'chatID' => $chatId,
+                    'fileName' => $fileName,
+                    'fileExtension' => $img->getClientOriginalExtension(),
+                    'filePath' => $filePath,
+                    'fileSize' => $finalSize,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                $img->move(public_path('chat_attachments/'), $fileName);
+                $filePath = asset('chat_attachments/' . $fileName);
+                DB::table('devAttachments')->insert([
+                    'chatID' => $chatId,
+                    'fileName' => $fileName,
+                    'fileExtension' => $img->getClientOriginalExtension(),
+                    'filePath' => $filePath,
+                    'fileSize' => $size,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        return redirect()->route('Chatsup.chatsup', ["ticket_dev" => $ticketId])
+            ->with('success', 'Dev ticket berhasil dibuat.');
+    }
+
+    public function validateDevTicket(Request $request)
+    {
         $rules = [
             'case_type' => 'required|in:ticket,external',
             'client_ticket_id' => 'required_if:case_type,ticket|nullable|integer|exists:clientTickets,id',
@@ -227,7 +402,7 @@ class SupportClientChatController extends Controller
             'title.max' => 'Judul terlalu panjang. Mohon memendekkan judul tersebut.',
             'description.required' => 'Mohon isi deskripsi permasalahan pada tiket tersebut.',
             'description.max' => 'Deskripsi tersebut melewati batasan huruf 10000 karakter.',
-            'image.mimes'=> 'Gambar tersebut tidak menggunakan format yang dapat di-support.',
+            'image.mimes' => 'Gambar tersebut tidak menggunakan format yang dapat di-support.',
             'image.max' => 'Ukuran maksimal gambar harus dibawah 5MB.'
         ];
 
@@ -250,7 +425,7 @@ class SupportClientChatController extends Controller
         $tickets = DB::table('clientTickets')
             ->where('isDeleted', 0)
             ->where('supportID', $user->id)
-            ->where('status','SEDANG DIPROSES')
+            ->where('status', 'SEDANG DIPROSES')
             ->orderByDesc('created_at')
             ->limit(200)
             ->get(['id', 'title', 'status']);
@@ -278,6 +453,8 @@ class SupportClientChatController extends Controller
             'roles' => $roles,
         ]);
     }
+
+
 
     public function index(Request $request)
     {
@@ -356,7 +533,7 @@ class SupportClientChatController extends Controller
             foreach ($msgAttachments as $att) {
                 $isImage = in_array(strtolower($att->fileExtension), ['jpg', 'jpeg', 'png', 'webp']);
                 $normalizedUrl = $isImage ? 'chat_images/' .  $att->fileName
-                                      : 'chat_attachments/' . $att->fileName;
+                    : 'chat_attachments/' . $att->fileName;
 
                 $width = null;
                 $height = null;
@@ -386,7 +563,7 @@ class SupportClientChatController extends Controller
                     'size' => $att->fileSize,
                     'extension' => $att->fileExtension,
                     'width' => $isImage ? $displayWidth : '',
-                    'height' => $isImage ? $displayHeight : '' 
+                    'height' => $isImage ? $displayHeight : ''
                 ];
             }
 
@@ -472,10 +649,10 @@ class SupportClientChatController extends Controller
                         continue;
                     }
                 }
-                $imageResolutions[] = [0,0];
+                $imageResolutions[] = [0, 0];
                 $attCount++;
-                $newFileName = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' .($idx + 1) . '_' . $file->getClientOriginalName();
-                $file->move(public_path('chat_attachments/'), $newFileName);   
+                $newFileName = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' . ($idx + 1) . '_' . $file->getClientOriginalName();
+                $file->move(public_path('chat_attachments/'), $newFileName);
                 $filePath = asset('chat_attachments/' . $newFileName);
                 $targetPath = public_path('chat_attachments/' . $newFileName);
 
@@ -566,7 +743,6 @@ class SupportClientChatController extends Controller
 
                     $gambarUrl = asset('chat_images/' . $namaGambar);
                     $finalSize = @filesize($savePath) ?: $size;
-
                 } catch (Exception $e) {
                     dd('Imagick error: ' . $e->getMessage());
                 }
@@ -586,7 +762,7 @@ class SupportClientChatController extends Controller
         $this->pushChatToFirebase($chat, $imageResolutions);
         $tickClass = ClientTicket::findOrFail($ticketId);
         $user = Client::findOrFail($tickClass->userID);
-        
+
         //Email Notification
         Mail::to($user->email)->send(new NotificationMail($user->name, $tickClass->title, $ticketId, $message, $attCount));
 
@@ -616,9 +792,9 @@ class SupportClientChatController extends Controller
     }
 
     private function pushChatToFirebase(ClientChat $chat, $imageResolutions)
-    {   
+    {
         //Database URI is used since this machine is using an old version of firebase and always defaults to the old link.
-        $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials.file')))->withDatabaseUri(config('firebase.credentials.url')); 
+        $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials.file')))->withDatabaseUri(config('firebase.credentials.url'));
         $db = $factory->createDatabase();
 
         $ticketId = $chat->ticketID;
@@ -639,7 +815,7 @@ class SupportClientChatController extends Controller
         });
 
         $db->getReference("tickets/{$ticketId}/{$chat->id}")
-        ->set([
+            ->set([
                 'id' => $chat->id,
                 'response' => $chat->response,
                 'type' => $chat->type,
@@ -647,12 +823,13 @@ class SupportClientChatController extends Controller
                 'attachments' => $attachments,
                 'ticket_id' => $chat->ticketID
             ]);
-        
+
         //Immediately remove chat cuz we just need it to store the real time thing.
         $db->getReference("tickets/{$ticketId}/{$chat->id}")->remove();
     }
 
-    public function resolveTicket(Request $request, $id) {
+    public function resolveTicket(Request $request, $id)
+    {
         $ticket = ClientTicket::findOrFail($id);
         if ($ticket->status === "DITUTUP" || $ticket->supportID !== Auth::id()) {
             return back();
@@ -669,22 +846,24 @@ class SupportClientChatController extends Controller
         return back();
     }
 
-    private function changeToResolveToFirebase(ClientTicket $ticket) {
-        $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials.file')))->withDatabaseUri(config('firebase.credentials.url')); 
+    private function changeToResolveToFirebase(ClientTicket $ticket)
+    {
+        $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials.file')))->withDatabaseUri(config('firebase.credentials.url'));
         $db = $factory->createDatabase();
 
         $db->getReference("tickets/status/resolved/{$ticket->id}")->set([
-                'id' => $ticket->id,
-                'status' => 'SELESAI'
-            ]);
+            'id' => $ticket->id,
+            'status' => 'SELESAI'
+        ]);
 
         $db->getReference("tickets/status/resolved/{$ticket->id}")->remove();
     }
 
-    private function readWithFirebase($id) {
-        $idString = implode(',',$this->getIDsToRead($id));
+    private function readWithFirebase($id)
+    {
+        $idString = implode(',', $this->getIDsToRead($id));
 
-        $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials.file')))->withDatabaseUri(config('firebase.credentials.url')); 
+        $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials.file')))->withDatabaseUri(config('firebase.credentials.url'));
         $db = $factory->createDatabase();
 
         $db->getReference("tickets/status/reader/sp-{$id}")->set([
@@ -694,7 +873,8 @@ class SupportClientChatController extends Controller
         $db->getReference("tickets/status/reader/sp-{$id}")->remove();
     }
 
-    public function readIDinRealtime(Request $request, ClientTicket $t) {
+    public function readIDinRealtime(Request $request, ClientTicket $t)
+    {
         $request->validate([
             'ids' => ['required', 'regex:/^\d+(,\d+)*$/'],
         ]);
@@ -709,7 +889,8 @@ class SupportClientChatController extends Controller
         ]);
     }
 
-    private function getIDsToRead($id) {
+    private function getIDsToRead($id)
+    {
         $ticket = ClientTicket::findOrFail($id);
         $timezone = session('user_timezone', config('app.timezone'));
 
@@ -722,13 +903,13 @@ class SupportClientChatController extends Controller
         $dayStart = Carbon::parse($latestChat->created_at)->timezone($timezone)->startOfDay();
 
         $ids = ClientChat::where('ticketID', $ticket->id)
-        ->where('type', 'client')
-        ->whereBetween('created_at', [
-            $dayStart->copy()->timezone(config('app.timezone')),
-            $dayStart->copy()->endOfDay()->timezone(config('app.timezone'))
-        ])
-        ->pluck('id')
-        ->toArray();
+            ->where('type', 'client')
+            ->whereBetween('created_at', [
+                $dayStart->copy()->timezone(config('app.timezone')),
+                $dayStart->copy()->endOfDay()->timezone(config('app.timezone'))
+            ])
+            ->pluck('id')
+            ->toArray();
 
         return $ids;
     }

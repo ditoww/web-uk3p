@@ -18,6 +18,12 @@ class DevChat extends Model
         return $this->hasMany(DevAttachment::class, 'chatID', 'id');
     }
 
+
+    public function attachment()
+    {
+        return $this->hasOne(DevAttachment::class, 'chatID', 'id');
+    }
+
     public function devTicket()
     {
         return $this->belongsTo(DevTicket::class, 'ticket_id');

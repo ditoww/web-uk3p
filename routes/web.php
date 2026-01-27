@@ -215,6 +215,7 @@ Route::middleware(['support'])->group(function () {
     Route::post('/support/clientchat/read/{t}', [SupportClientChatController::class, 'readIDinRealtime']);
     Route::post('/support/clientchat/store-realtime', [SupportClientChatController::class, 'storeRealtime'])->name('SupportClientChat.storeRealtime');
     Route::post('/support/clientchat/dev-ticket', [SupportClientChatController::class, 'createDevTicket'])->name('SupportClientChat.createDevTicket');
+    Route::post('/support/clientchat/copy-dev-ticket', [SupportClientChatController::class, 'copyDevTicket'])->name('SupportClientChat.copyDevTicket');
     Route::get('/support/devtickets/create', [SupportClientChatController::class, 'createDevTicketPage'])->name('SupportClientChat.createDevTicketPage');
     Route::post('/support/devtickets/create', [SupportClientChatController::class, 'validateDevTicket'])->name('SupportClientChat.validateDevTicket');
 
@@ -233,7 +234,7 @@ Route::middleware(['images'])->group(function () {
     Route::get('/images/sup/{filename}', [FileController::class, 'viewSupport'])->name('images.viewSupport');
 });
 
-Route::middleware(['support-images'])->group(function (){
+Route::middleware(['support-images'])->group(function () {
     Route::get('/files/support/{filename}', [FileController::class, 'downloadSupportChat'])->name('files.downloadSupportChat');
     Route::get('/images/support/{filename}', [FileController::class, 'viewSupportChat'])->name('images.viewSupportChat');
     Route::get('/files/dev/{filename}', [FileController::class, 'downloadDev'])->name('files.downloadDev');
