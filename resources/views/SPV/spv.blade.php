@@ -133,6 +133,7 @@
 
         .ticket-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: grab;
         }
 
         .ticket-card.dragging {
