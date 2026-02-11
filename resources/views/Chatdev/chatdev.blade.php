@@ -752,7 +752,8 @@
                                 <span class="fw-semibold d-none d-sm-inline">Mark as Resolved</span>
                             </button>
                             <button type="button" id="resolverButton" onclick="manualTrigger(event, 'undo-ticket')"
-                                class="btn d-flex align-items-center gap-2 text-white undo-btn" style="height:40px;">
+                                class="btn d-flex align-items-center gap-2 text-white undo-btn"
+                                @if (trim($selectedTicket->status) !== 'In Progress') disabled @endif style="height:40px;">
                                 <i class="bi bi-x-circle-fill fs-5"></i>
                                 <span class="fw-semibold d-none d-sm-inline">Batal Ambil Tiket</span>
                             </button>
