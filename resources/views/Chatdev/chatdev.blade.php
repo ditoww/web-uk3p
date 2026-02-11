@@ -867,7 +867,7 @@
         const otherProf = "{{ $selectedTicket->support_avatar ?? asset('assetsadmin/img/avatars/default.png') }}";
         const userProf = "{{ $selectedTicket->developer_avatar ?? asset('assetsadmin/img/avatars/default.png') }}";
         const allowedImages = ['png', 'jpg', 'jpeg', 'webp'];
-        const allowedAtts = ['docx', 'pdf', 'xlsx', 'exe'];
+        const allowedAtts = ['docx', 'pdf', 'xlsx', 'exe', 'zip', '7zip'];
         const maxSize = 10 * 1024 * 1024;
         const maxFiles = 4;
 
@@ -914,6 +914,12 @@
                 return await isXlsx(f);
             }
             if (ext == "exe") {
+                return true
+            }
+            if (ext == "zip") {
+                return true
+            }
+            if (ext == "7zip") {
                 return true
             }
 
