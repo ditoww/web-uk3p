@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\DevTicket;
 use App\Models\DevChat;
 use App\Rules\StrictDocx;
+use App\Rules\StrictExe;
 use App\Rules\StrictXlsx;
 //use App\Services\WhatsAppNotificationService;
 
@@ -16,152 +17,152 @@ use Imagick;
 
 class ChatDevController extends Controller
 {
-   public function index(Request $request)
-{
-    $userId = Auth::id(); // Ambil user id dari session
-    $user = Auth::user(); // Ambil user object dari session
+    public function index(Request $request)
+    {
+        $userId = Auth::id(); // Ambil user id dari session
+        $user = Auth::user(); // Ambil user object dari session
 
-    // Mengambil semua tiket yang terkait dengan developer
-    $tickets = DB::table('devTickets')
-        ->join('users AS support', 'devTickets.supportID', '=', 'support.id')
-        ->join('users AS developer', 'devTickets.devID', '=', 'developer.id')
-        ->where('devTickets.devID', '=', $userId)
-        ->whereIn('devTickets.status', ['In Progress', 'Resolved'])
-        ->where('devTickets.isDeleted', '=', 0)
-        ->select(
-            'devTickets.id',
-            'devTickets.title',
-            'devTickets.status',
-            'devTickets.created_at',
-            'support.name AS support_name',
-            'support.profile_picture AS support_avatar',
-            'support.email AS support_email',
-            'developer.email AS developer_email',
-            'developer.name AS developer_name',
-            'developer.profile_picture AS developer_avatar',
-            'devTickets.priority',
-        )
-        ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
-        ->get();
+        // Mengambil semua tiket yang terkait dengan developer
+        $tickets = DB::table('devTickets')
+            ->join('users AS support', 'devTickets.supportID', '=', 'support.id')
+            ->join('users AS developer', 'devTickets.devID', '=', 'developer.id')
+            ->where('devTickets.devID', '=', $userId)
+            ->whereIn('devTickets.status', ['In Progress', 'Resolved'])
+            ->where('devTickets.isDeleted', '=', 0)
+            ->select(
+                'devTickets.id',
+                'devTickets.title',
+                'devTickets.status',
+                'devTickets.created_at',
+                'support.name AS support_name',
+                'support.profile_picture AS support_avatar',
+                'support.email AS support_email',
+                'developer.email AS developer_email',
+                'developer.name AS developer_name',
+                'developer.profile_picture AS developer_avatar',
+                'devTickets.priority',
+            )
+            ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
+            ->get();
 
-    // Check if any tickets were returned
-    if ($tickets->isEmpty()) {
-        return redirect()->route('Developer.developer')->with('error', 'No tickets found.');
-    }
+        // Check if any tickets were returned
+        if ($tickets->isEmpty()) {
+            return redirect()->route('Developer.developer')->with('error', 'No tickets found.');
+        }
 
-    // Tentukan ticket ID yang pertama kali dipilih (jika tidak ada, pilih ticket pertama)
-    $ticketId = $request->get('ticket', $tickets[0]->id);
+        // Tentukan ticket ID yang pertama kali dipilih (jika tidak ada, pilih ticket pertama)
+        $ticketId = $request->get('ticket', $tickets[0]->id);
 
-    // Mengambil pesan-pesan terkait tiket yang dipilih
-    $messages = DB::table('devChats')
-        ->join('devTickets', 'devChats.ticket_id', '=', 'devTickets.id')
-        ->where('devTickets.id', '=', $ticketId)
-        ->select(
-            'devChats.sender',
-            'devChats.response AS chat_message',
-            'devChats.created_at AS chat_time',
-            'devChats.check',
-            'devChats.id'
-        )
-        ->orderBy('devChats.created_at', 'asc')
-        ->get();
-    
-    $attachments = DB::table('devAttachments')
-        ->whereIn('chatID', $messages->pluck('id'))
-        ->get()
-        ->groupBy('chatID');
-    
-    // Menyiapkan data untuk UI
-    $selectedTicket = $tickets->firstWhere('id', $ticketId);
+        // Mengambil pesan-pesan terkait tiket yang dipilih
+        $messages = DB::table('devChats')
+            ->join('devTickets', 'devChats.ticket_id', '=', 'devTickets.id')
+            ->where('devTickets.id', '=', $ticketId)
+            ->select(
+                'devChats.sender',
+                'devChats.response AS chat_message',
+                'devChats.created_at AS chat_time',
+                'devChats.check',
+                'devChats.id'
+            )
+            ->orderBy('devChats.created_at', 'asc')
+            ->get();
 
-    if (!$selectedTicket) abort(404);
+        $attachments = DB::table('devAttachments')
+            ->whereIn('chatID', $messages->pluck('id'))
+            ->get()
+            ->groupBy('chatID');
 
-    // Inisialisasi messages sebagai objek (bukan array)
-    $selectedTicket->messages = collect(); // Menginisialisasi sebagai Collection
+        // Menyiapkan data untuk UI
+        $selectedTicket = $tickets->firstWhere('id', $ticketId);
 
-    // Menambahkan pesan chat ke data
-    foreach ($messages as $msg) {
-        $msgAttachments = $attachments->get($msg->id, collect());
-        $attList = [];
-        foreach ($msgAttachments as $att) {
-            $isImage = in_array(strtolower($att->fileExtension), ['jpg', 'jpeg', 'png', 'webp']);
+        if (!$selectedTicket) abort(404);
 
-            if ($isImage) {
-                $normalizedUrl = 'chat_images/' .  $att->fileName;
-            } else {
-                $normalizedUrl = 'chat_attachments/' . $att->fileName;
-            }
-            $displayName = $att->fileName;
+        // Inisialisasi messages sebagai objek (bukan array)
+        $selectedTicket->messages = collect(); // Menginisialisasi sebagai Collection
 
-            $width = null;
-            $height = null;
-            $displayWidth = null;
-            $displayHeight = null;
+        // Menambahkan pesan chat ke data
+        foreach ($messages as $msg) {
+            $msgAttachments = $attachments->get($msg->id, collect());
+            $attList = [];
+            foreach ($msgAttachments as $att) {
+                $isImage = in_array(strtolower($att->fileExtension), ['jpg', 'jpeg', 'png', 'webp']);
 
-            if ($isImage) {
-                $imagePath = public_path($normalizedUrl);
-                if (file_exists($imagePath)) {
-                    $gambar = new Imagick($imagePath);
-                    $width = $gambar->getImageWidth();
-                    $height = $gambar->getImageHeight();
+                if ($isImage) {
+                    $normalizedUrl = 'chat_images/' .  $att->fileName;
+                } else {
+                    $normalizedUrl = 'chat_attachments/' . $att->fileName;
+                }
+                $displayName = $att->fileName;
 
-                    $maxW = 250;
-                    $maxH = 200;
-                    $ratio = min($maxW / $width, $maxH / $height, 1);
+                $width = null;
+                $height = null;
+                $displayWidth = null;
+                $displayHeight = null;
 
-                    $displayWidth = (int)($width * $ratio);
-                    $displayHeight = (int)($height * $ratio);
-                    $gambar->clear();
-                    $gambar->destroy();
+                if ($isImage) {
+                    $imagePath = public_path($normalizedUrl);
+                    if (file_exists($imagePath)) {
+                        $gambar = new Imagick($imagePath);
+                        $width = $gambar->getImageWidth();
+                        $height = $gambar->getImageHeight();
+
+                        $maxW = 250;
+                        $maxH = 200;
+                        $ratio = min($maxW / $width, $maxH / $height, 1);
+
+                        $displayWidth = (int)($width * $ratio);
+                        $displayHeight = (int)($height * $ratio);
+                        $gambar->clear();
+                        $gambar->destroy();
+                    }
+                }
+
+                if ($isImage) {
+                    $attList[] = [
+                        'type' => 'image',
+                        'url' => $normalizedUrl,
+                        'name' => $displayName,
+                        'size' => $att->fileSize,
+                        'width' => $displayWidth,
+                        'height' => $displayHeight
+                    ];
+                } else {
+                    $attList[] = [
+                        'type' => 'file',
+                        'url' => $normalizedUrl,
+                        'name' => $displayName,
+                        'size' => $att->fileSize
+                    ];
                 }
             }
 
-            if ($isImage) {
-                $attList[] = [
-                    'type' => 'image',
-                    'url' => $normalizedUrl,
-                    'name' => $displayName,
-                    'size' => $att->fileSize,
-                    'width' => $displayWidth,
-                    'height' => $displayHeight
-                ];
+            $timezone = session('user_timezone', config('app.timezone'));
+            $cTime = Carbon::parse($msg->chat_time)->timezone($timezone);
+
+            if ($cTime->isToday()) {
+                $formattedTime = $cTime->format('h:i A');
             } else {
-                $attList[] = [
-                    'type' => 'file',
-                    'url' => $normalizedUrl,
-                    'name' => $displayName,
-                    'size' => $att->fileSize
-                ];
+                $formattedTime = $cTime->format('M j, h:i A');
             }
+
+            $status = "";
+
+            if ($msg->check) $status = $msg->check;
+
+            $selectedTicket->messages->push([
+                'sender' => $msg->sender,
+                'avatar' => $msg->sender === 'support' ? $selectedTicket->support_avatar : $selectedTicket->developer_avatar,
+                'message' => $msg->chat_message,
+                'status' => $status,
+                'id' => $msg->id,
+                'time' => $formattedTime,
+                'attachments' => $attList,
+            ]);
         }
-
-        $timezone = session('user_timezone', config('app.timezone'));
-        $cTime = Carbon::parse($msg->chat_time)->timezone($timezone);
-
-        if ($cTime->isToday()) {
-            $formattedTime = $cTime->format('h:i A');
-        } else {
-            $formattedTime = $cTime->format('M j, h:i A');
-        }
-
-        $status = "";
-
-        if ($msg->check) $status = $msg->check;
-
-        $selectedTicket->messages->push([
-            'sender' => $msg->sender,
-            'avatar' => $msg->sender === 'support' ? $selectedTicket->support_avatar : $selectedTicket->developer_avatar,
-            'message' => $msg->chat_message,
-            'status' => $status,
-            'id' => $msg->id,
-            'time' => $formattedTime,
-            'attachments' => $attList,
-        ]);
+        $readIds = $this->getIDsToRead($selectedTicket->id);
+        DevChat::where('ticket_id', $selectedTicket->id)->whereIn('id', $readIds)->update(['check' => 'read']);
+        return view('Chatdev.chatdev', compact('selectedTicket', 'tickets', 'user'), ["readChats" => implode(',', $readIds)]);
     }
-    $readIds = $this->getIDsToRead($selectedTicket->id);
-    DevChat::where('ticket_id', $selectedTicket->id)->whereIn('id', $readIds)->update(['check' => 'read']);
-    return view('Chatdev.chatdev', compact('selectedTicket', 'tickets', 'user'), ["readChats" => implode(',',$readIds)]);
-}
 
     public function store(Request $request)
     {
@@ -187,13 +188,14 @@ class ChatDevController extends Controller
             'updated_at' => now(),
         ]);
 
+
         // Menangani file upload jika ada
         if ($request->hasFile('attachment')) {
             // Hitung total attachment yang sudah ada untuk tiket ini
             $attachmentCount = DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
+                ->whereIn('devAttachments.fileExtension', ['docx', 'pdf', 'xlsx', 'exe'])
                 ->count();
 
             foreach ($request->file('attachment') as $idx => $file) {
@@ -210,8 +212,14 @@ class ChatDevController extends Controller
                         continue;
                     }
                 }
+                if ($extension === 'exe') {
+                    $rule = new StrictExe();
+                    if (!$rule->passes('attachment.*', $file)) {
+                        continue;
+                    }
+                }
                 $size = $file->getSize();
-                $newFileName = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' . 'dev_' .($attachmentCount + $idx + 1) . '_' . $file->getClientOriginalName();
+                $newFileName = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' . 'dev_' . ($attachmentCount + $idx + 1) . '_' . $file->getClientOriginalName();
                 //$filePath = $file->storeAs('chat_attachments', $newFileName, 'public');
                 $targetPath = public_path('chat_attachments/' . $newFileName);
 
@@ -220,7 +228,7 @@ class ChatDevController extends Controller
                         mkdir(public_path('chat_attachments'), 0775, true);
                     }
                 }
-                $file->move(public_path('chat_attachments/'), $newFileName);   
+                $file->move(public_path('chat_attachments/'), $newFileName);
                 $filePath = asset('chat_attachments/' . $newFileName);
 
                 DB::table('devAttachments')->insert([
@@ -240,13 +248,13 @@ class ChatDevController extends Controller
             $imageCount = DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['jpg','jpeg','png','webp'])
+                ->whereIn('devAttachments.fileExtension', ['jpg', 'jpeg', 'png', 'webp'])
                 ->count();
 
             foreach ($request->file('image') as $idx => $gambar) {
                 $size = $gambar->getSize();
                 $ext = strtolower($gambar->getClientOriginalExtension());
-                $namaGambar = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' . 'dev_' .($imageCount + $idx + 1) . '_' . $gambar->getClientOriginalName();
+                $namaGambar = $datePrefix . "-" . $ticketId . '_' . $chatId . '_' . 'dev_' . ($imageCount + $idx + 1) . '_' . $gambar->getClientOriginalName();
                 $targetPath = public_path('chat_images/' . $namaGambar);
 
                 if (!file_exists($targetPath)) {
@@ -323,7 +331,7 @@ class ChatDevController extends Controller
         }*/
         // Redirect kembali ke halaman tiket dengan pesan sukses
         return redirect()->route('Chatdev.chatdev', ['ticket' => $ticketId])
-                         ->with('success', 'Message sent successfully.');
+            ->with('success', 'Message sent successfully.');
     }
 
     public function storeRealtime(Request $request)
@@ -377,14 +385,14 @@ class ChatDevController extends Controller
                         }
                     }
                     $attachmentCount = DB::table('devAttachments')
-                    ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
-                    ->where('devChats.ticket_id', $ticketId)
-                    ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
-                    ->count();
+                        ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
+                        ->where('devChats.ticket_id', $ticketId)
+                        ->whereIn('devAttachments.fileExtension', ['docx', 'pdf', 'xlsx'])
+                        ->count();
                     $size = $file->getSize();
                     // For now, we'll store the attachment info
                     // In a real implementation, you'd want to handle file uploads properly
-                    $newFileName = $datePrefix . "-" . $ticketId . '_' .  $chatId . '_' . 'dev_' .($attachmentCount + $idx + 1) . '_' . $file->getClientOriginalName();
+                    $newFileName = $datePrefix . "-" . $ticketId . '_' .  $chatId . '_' . 'dev_' . ($attachmentCount + $idx + 1) . '_' . $file->getClientOriginalName();
                     $targetPath = public_path('chat_attachments/' . $newFileName);
 
                     if (!file_exists($targetPath)) {
@@ -392,7 +400,7 @@ class ChatDevController extends Controller
                             mkdir(public_path('chat_attachments'), 0775, true);
                         }
                     }
-                    $file->move(public_path('chat_attachments/'), $newFileName);   
+                    $file->move(public_path('chat_attachments/'), $newFileName);
                     $filePath = asset('chat_attachments/' . $newFileName);
 
                     DB::table('devAttachments')->insert([
@@ -418,15 +426,15 @@ class ChatDevController extends Controller
             if ($request->hasFile('image')) {
                 foreach ($request->file('image') as $idx => $gambar) {
                     $imageCount = DB::table('devAttachments')
-                    ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
-                    ->where('devChats.ticket_id', $ticketId)
-                    ->whereIn('devAttachments.fileExtension', ['jpg','jpeg','png','webp'])
-                    ->count();
+                        ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
+                        ->where('devChats.ticket_id', $ticketId)
+                        ->whereIn('devAttachments.fileExtension', ['jpg', 'jpeg', 'png', 'webp'])
+                        ->count();
 
                     $size = $gambar->getSize();
                     $ext = strtolower($gambar->getClientOriginalExtension());
 
-                    $namaGambar = $datePrefix . "-" . $ticketId . '_' .  $chatId . '_' . 'dev_' .($imageCount + $idx + 1) . '_' . $gambar->getClientOriginalName();
+                    $namaGambar = $datePrefix . "-" . $ticketId . '_' .  $chatId . '_' . 'dev_' . ($imageCount + $idx + 1) . '_' . $gambar->getClientOriginalName();
                     $targetPath = public_path('chat_images/' . $namaGambar);
 
                     if (!file_exists($targetPath)) {
@@ -520,13 +528,13 @@ class ChatDevController extends Controller
                 'sender' => 'dev',
                 'senderId' => $userId
             ]);
-
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to store message: ' . $e->getMessage()], 500);
         }
     }
 
-    public function resolveTicket(Request $request, $id) {
+    public function resolveTicket(Request $request, $id)
+    {
         $ticket = DevTicket::findOrFail($id);
         if ($ticket->devID !== Auth::id()) return back();
         if (strtolower($ticket->status) === "closed") return back();
@@ -535,7 +543,23 @@ class ChatDevController extends Controller
         return back();
     }
 
-    private function getIDsToRead($id) {
+    public function undoTicket(Request $request, $id)
+    {
+        $ticket = DevTicket::findOrfail($id);
+        if ($ticket->devID !== Auth::id()) {
+            return back();
+        }
+        if (strtolower($ticket->status) === "closed") {
+            return back();
+        }
+        $ticket->status = "Open";
+        $ticket->devID = null;
+        $ticket->save();
+        return redirect()->route('Chatdev.chatdev');
+    }
+
+    private function getIDsToRead($id)
+    {
         $ticket = DevTicket::findOrFail($id);
         $timezone = session('user_timezone', config('app.timezone'));
 
@@ -548,18 +572,19 @@ class ChatDevController extends Controller
         $dayStart = Carbon::parse($latestChat->created_at)->timezone($timezone)->startOfDay();
 
         $ids = DevChat::where('ticket_id', $ticket->id)
-        ->where('sender', 'support')
-        ->whereBetween('created_at', [
-            $dayStart->copy()->timezone(config('app.timezone')),
-            $dayStart->copy()->endOfDay()->timezone(config('app.timezone'))
-        ])
-        ->pluck('id')
-        ->toArray();
+            ->where('sender', 'support')
+            ->whereBetween('created_at', [
+                $dayStart->copy()->timezone(config('app.timezone')),
+                $dayStart->copy()->endOfDay()->timezone(config('app.timezone'))
+            ])
+            ->pluck('id')
+            ->toArray();
 
         return $ids;
     }
 
-    public function readIDinRealtime(Request $request, DevTicket $t) {
+    public function readIDinRealtime(Request $request, DevTicket $t)
+    {
         $request->validate([
             'ids' => ['required', 'regex:/^\d+(,\d+)*$/'],
         ]);
@@ -577,7 +602,7 @@ class ChatDevController extends Controller
     private function formatPhone(?string $raw): ?string
     {
         if (!$raw) return null;
-        $clean = preg_replace('/[^0-9]/','', $raw);
+        $clean = preg_replace('/[^0-9]/', '', $raw);
         $clean = ltrim($clean, '0');
         return $clean;
     }

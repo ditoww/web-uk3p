@@ -164,6 +164,34 @@
             box-shadow: 0 2px 4px rgba(32, 32, 32, 0.3);
         }
 
+        .undo-btn {
+            background-color: #dc3545;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .undo-btn:hover {
+            background-color: #bb2d3b;
+            /* darker shade */
+            box-shadow: 0 4px 6px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn.undo-btn:active {
+            background-color: #a52834;
+            /* even darker */
+        }
+
+        .btn.undo-btn:disabled {
+            background-color: #6D6969FF;
+            opacity: 0.4;
+            box-shadow: none;
+        }
+
+
         .chat-image-clickable {
             max-width: 250px;
             cursor: zoom-in;
@@ -683,6 +711,10 @@
                     onsubmit="return confirm('Apakah Anda yakin untuk menandai ticket ini sebagai selesai?')">
                     @csrf
                 </form>
+                <form method="POST" id="undo-ticket" action="{{ route('Chatdev.undo', ['id' => $selectedTicket->id]) }}"
+                    onsubmit="return confirm('Apakah Anda yakin untuk batal mengambil tiket ini?')">
+                    @csrf
+                </form>
                 <form id="chat-form" action="{{ route('Chatdev.store') }}" method="POST" enctype="multipart/form-data"
                     class="w-100">
                     @csrf
@@ -712,12 +744,19 @@
                             style="height:40px;">
                             <i class="bi bi-send-fill"></i>
                         </button>
-                        <button type="button" id="resolverButton" onclick="manualTrigger(event, 'ticket-resolver')"
-                            class="btn d-flex align-items-center gap-2 text-white mark-resolved-btn"
-                            @if (trim($selectedTicket->status) !== 'In Progress') disabled @endif style="height:40px;">
-                            <i class="bi bi-check-circle-fill fs-5"></i>
-                            <span class="fw-semibold d-none d-sm-inline">Mark as Resolved</span>
-                        </button>
+                        <div class="d-flex flex-column gap-2">
+                            <button type="button" id="resolverButton" onclick="manualTrigger(event, 'ticket-resolver')"
+                                class="btn d-flex align-items-center gap-2 text-white mark-resolved-btn"
+                                @if (trim($selectedTicket->status) !== 'In Progress') disabled @endif style="height:40px;">
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                                <span class="fw-semibold d-none d-sm-inline">Mark as Resolved</span>
+                            </button>
+                            <button type="button" id="resolverButton" onclick="manualTrigger(event, 'undo-ticket')"
+                                class="btn d-flex align-items-center gap-2 text-white undo-btn" style="height:40px;">
+                                <i class="bi bi-x-circle-fill fs-5"></i>
+                                <span class="fw-semibold d-none d-sm-inline">Batal Ambil Tiket</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Row 2: attachment buttons -->
@@ -827,7 +866,7 @@
         const otherProf = "{{ $selectedTicket->support_avatar ?? asset('assetsadmin/img/avatars/default.png') }}";
         const userProf = "{{ $selectedTicket->developer_avatar ?? asset('assetsadmin/img/avatars/default.png') }}";
         const allowedImages = ['png', 'jpg', 'jpeg', 'webp'];
-        const allowedAtts = ['docx', 'pdf', 'xlsx'];
+        const allowedAtts = ['docx', 'pdf', 'xlsx', 'exe'];
         const maxSize = 10 * 1024 * 1024;
         const maxFiles = 4;
 
@@ -872,6 +911,9 @@
             }
             if (ext === "xlsx") {
                 return await isXlsx(f);
+            }
+            if (ext == "exe") {
+                return true
             }
 
             return false;
