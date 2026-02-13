@@ -868,7 +868,7 @@
         const userProf = "{{ $selectedTicket->developer_avatar ?? asset('assetsadmin/img/avatars/default.png') }}";
         const allowedImages = ['png', 'jpg', 'jpeg', 'webp'];
         const allowedAtts = ['docx', 'pdf', 'xlsx', 'exe', 'zip', '7zip'];
-        const maxSize = 10 * 1024 * 1024;
+        const maxSize = 100 * 1024 * 1024;
         const maxFiles = 4;
 
         function getExt(s) {

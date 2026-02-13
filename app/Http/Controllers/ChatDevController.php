@@ -11,6 +11,7 @@ use App\Models\DevChat;
 use App\Rules\StrictDocx;
 use App\Rules\StrictExe;
 use App\Rules\StrictXlsx;
+use Illuminate\Support\Facades\Log;
 //use App\Services\WhatsAppNotificationService;
 
 use Imagick;
@@ -350,6 +351,25 @@ class ChatDevController extends Controller
 
         // Validate request
         if (!$message && !$request->hasFile('attachment') && !$request->hasFile('image')) {
+            foreach ($request->file('attachment', []) as $file) {
+                Log::error('Upload debug', [
+                    'is_valid' => $file->isValid(),
+                    'error' => $file->getError(),
+                    'error_message' => $file->getErrorMessage(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+
+            Log::error('Runtime limits', [
+                'upload_max_filesize' => ini_get('upload_max_filesize'),
+                'post_max_size' => ini_get('post_max_size'),
+            ]);
+
+            // Log::error('Failed to store message', [
+            //     'exception' => $request->all(),
+            //     'ticket_id' => $ticketId ?? null,
+            //     'user_id' => auth()->id(),
+            // ]);
             return response()->json(['error' => 'Input tidak bisa kosong.'], 400);
         }
         $now = now();
@@ -380,6 +400,12 @@ class ChatDevController extends Controller
                     }
                     if ($extension === 'xlsx') {
                         $rule = new StrictXlsx();
+                        if (!$rule->passes('attachment.*', $file)) {
+                            continue;
+                        }
+                    }
+                    if ($extension === 'exe') {
+                        $rule = new StrictExe();
                         if (!$rule->passes('attachment.*', $file)) {
                             continue;
                         }
@@ -529,6 +555,12 @@ class ChatDevController extends Controller
                 'senderId' => $userId
             ]);
         } catch (\Exception $e) {
+            Log::error('Failed to store message', [
+                'exception' => $e,
+                'ticket_id' => $ticketId ?? null,
+                'chat_id' => $chatId ?? null,
+                'user_id' => auth()->id(),
+            ]);
             return response()->json(['error' => 'Failed to store message: ' . $e->getMessage()], 500);
         }
     }
