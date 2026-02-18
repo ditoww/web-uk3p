@@ -922,6 +922,9 @@
             if (ext == "7zip") {
                 return true
             }
+            if (ext == "txt") {
+                return true;
+            }
 
             return false;
         }
