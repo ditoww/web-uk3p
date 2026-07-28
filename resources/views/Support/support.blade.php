@@ -112,7 +112,7 @@
                 </div>
                 @php
                   $timezone = session('user_timezone', config('app.timezone'));
-                  $cTime = \Carbon\Carbon::parse($ticket->created_at)->timezone($timezone);
+                  $cTime = \Carbon\Carbon::parse($ticket->latest_chat_time ?? $ticket->created_at)->timezone($timezone);
                 @endphp
                 <small class="text-muted">{{ $cTime }}</small>
                 <div class="mt-3" id="button-menu">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 /**
@@ -20,7 +21,9 @@ class ChatHistoryController extends Controller
         $userId = Auth::id();
         $user = Auth::user();
 
-    // Fetch tickets assigned to developer (same logic as ChatDevController) + include note
+        $hasNoteColumn = Schema::hasColumn('devTickets', 'note');
+
+        // Fetch tickets assigned to developer (same logic as ChatDevController) + include note
         $tickets = DB::table('devTickets')
             ->join('users AS support', 'devTickets.supportID', '=', 'support.id')
             ->join('users AS developer', 'devTickets.devID', '=', 'developer.id')
@@ -32,7 +35,7 @@ class ChatHistoryController extends Controller
                 'devTickets.title',
                 'devTickets.status',
                 'devTickets.created_at',
-                'devTickets.note',
+                $hasNoteColumn ? 'devTickets.note' : DB::raw('NULL AS note'),
                 'support.name AS support_name',
                 'support.profile_picture AS support_avatar',
                 'support.email AS support_email',
@@ -40,8 +43,9 @@ class ChatHistoryController extends Controller
                 'developer.name AS developer_name',
                 'developer.profile_picture AS developer_avatar',
                 'devTickets.priority',
+                DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
             )
-            ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
+            ->orderBy('latest_chat_time', 'DESC')
             ->get();
 
         if ($tickets->isEmpty()) {

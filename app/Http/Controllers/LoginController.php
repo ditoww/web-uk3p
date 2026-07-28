@@ -53,6 +53,10 @@ class LoginController extends Controller
             RateLimiter::clear($this->throttleKey($request));
 
             switch (Auth::user()->privLevel) {
+                case 'super_admin':
+                    return redirect()->route('admin.admin');
+                case 'admin':
+                    return redirect()->route('akunadmin');
                 case 'spv':
                     return redirect()->route('SPV.spv');
                 case 'developer':

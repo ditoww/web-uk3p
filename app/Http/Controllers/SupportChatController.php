@@ -24,12 +24,14 @@ class SupportChatController extends Controller
     $query = DevTicket::select(
         'devTickets.*',
         'users.name as developer_name',
-        'users.email as developer_email'
+        'users.email as developer_email',
+        DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
     )
     ->leftJoin('users', 'users.id', '=', 'devTickets.devID')
     ->where('devTickets.supportID', auth()->id())
     ->where('devTickets.isDeleted', 0)
-    ->orderByDesc('devTickets.updated_at');
+    ->orderByRaw("CASE WHEN devTickets.status = 'In Progress' THEN 0 WHEN devTickets.status = 'Open' THEN 1 ELSE 2 END ASC")
+    ->orderBy('latest_chat_time', 'DESC');
 
     $tickets = $isHistory
         ? $query->where('devTickets.status', 'Closed')->get()

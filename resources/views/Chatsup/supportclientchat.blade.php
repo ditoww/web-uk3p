@@ -463,7 +463,7 @@
           <div class="mb-1 ticket-title">{{ $ticket->title }}</div>
           @php
             $timezone = session('user_timezone', config('app.timezone'));
-            $cTime = \Carbon\Carbon::parse($ticket->created_at)->timezone($timezone);
+            $cTime = \Carbon\Carbon::parse($ticket->latest_chat_time ?? $ticket->created_at)->timezone($timezone);
           @endphp
           <small class="text-muted meta-line">
             <span class="name">{{ $ticket->client_name }}</span>

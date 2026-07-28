@@ -35,12 +35,11 @@ class DeveloperController extends Controller
                 'devRoles.roleName',
                 'support.name as support_name',
                 'devTickets.priority',
-                DB::raw('(SELECT response FROM devChats WHERE devChats.ticket_id = devTickets.id ORDER BY devChats.created_at ASC LIMIT 1) as first_response')
+                DB::raw('(SELECT response FROM devChats WHERE devChats.ticket_id = devTickets.id ORDER BY devChats.created_at ASC LIMIT 1) as first_response'),
+                DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
             )
-            // Urutkan berdasarkan priority terendah terlebih dahulu, NULL diletakkan terakhir,
-            // lalu stabilkan urutan dengan created_at agar konsisten untuk priority yang sama
-            ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
-            ->orderBy('devTickets.created_at', 'ASC')
+            ->orderByRaw("CASE WHEN devTickets.status = 'In Progress' THEN 0 WHEN devTickets.status = 'Open' THEN 1 ELSE 2 END ASC")
+            ->orderBy('latest_chat_time', 'DESC')
             ->get();
 
         $roles = DevRole::where('isDeleted', 0)->get();
@@ -70,10 +69,11 @@ class DeveloperController extends Controller
                 'devRoles.roleName',
                 'support.name as support_name',
                 'devTickets.priority',
-                DB::raw('(SELECT response FROM devChats WHERE devChats.ticket_id = devTickets.id ORDER BY devChats.created_at ASC LIMIT 1) as first_response')
+                DB::raw('(SELECT response FROM devChats WHERE devChats.ticket_id = devTickets.id ORDER BY devChats.created_at ASC LIMIT 1) as first_response'),
+                DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
             )
-            ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
-            ->orderBy('devTickets.created_at', 'ASC')
+            ->orderByRaw("CASE WHEN devTickets.status = 'In Progress' THEN 0 WHEN devTickets.status = 'Open' THEN 1 ELSE 2 END ASC")
+            ->orderBy('latest_chat_time', 'DESC')
             ->get();
 
         // Cari ticket yang sesuai id dari koleksi yang sudah ada

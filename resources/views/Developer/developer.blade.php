@@ -159,8 +159,8 @@
       <div id="ticket-cards">
         @php
           $sortedTickets = ($tickets instanceof \Illuminate\Pagination\LengthAwarePaginator || $tickets instanceof \Illuminate\Pagination\Paginator)
-            ? $tickets->getCollection()->sortBy('priority')
-            : collect($tickets)->sortBy('priority');
+            ? $tickets->getCollection()
+            : $tickets;
         @endphp
         @foreach ($sortedTickets as $ticket)
         <div id="ticket-number-{{$ticket->id}}" class="ticket-card" data-role="{{$ticket->roleID}}">

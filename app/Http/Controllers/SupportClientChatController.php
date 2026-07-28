@@ -467,7 +467,6 @@ class SupportClientChatController extends Controller
             ->where('clientTickets.isDeleted', 0)
             ->where('clientTickets.supportID', $user->id)
             ->whereIn('clientTickets.status', ['BELUM DIPROSES', 'SEDANG DIPROSES', 'SELESAI', 'DITUTUP'])
-            ->orderByDesc('clientTickets.created_at')
             ->select(
                 'clientTickets.id',
                 'clientTickets.title',
@@ -475,8 +474,11 @@ class SupportClientChatController extends Controller
                 'clientTickets.created_at',
                 'client.name AS client_name',
                 'client.email AS client_email',
-                'client.profile_picture AS client_avatar'
+                'client.profile_picture AS client_avatar',
+                DB::raw('COALESCE((SELECT MAX(created_at) FROM clientChats WHERE clientChats.ticketID = clientTickets.id), clientTickets.created_at) as latest_chat_time')
             )
+            ->orderByRaw("CASE WHEN clientTickets.status = 'SEDANG DIPROSES' THEN 0 WHEN clientTickets.status = 'BELUM DIPROSES' THEN 1 WHEN clientTickets.status = 'SELESAI' THEN 2 ELSE 3 END ASC")
+            ->orderBy('latest_chat_time', 'DESC')
             ->get();
 
         if ($tickets->isEmpty()) {

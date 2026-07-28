@@ -34,9 +34,11 @@ class SupportController extends Controller
             //'support.email AS support_email',
             'client.name AS client_name',
             'client.email AS client_email',
-            'client.profile_picture AS client_avatar'
+            'client.profile_picture AS client_avatar',
+            DB::raw('COALESCE((SELECT MAX(created_at) FROM clientChats WHERE clientChats.ticketID = clientTickets.id), clientTickets.created_at) as latest_chat_time')
         )
-        ->orderBy('clientTickets.created_at', 'desc')
+        ->orderByRaw("CASE WHEN clientTickets.status = 'SEDANG DIPROSES' THEN 0 WHEN clientTickets.status = 'BELUM DIPROSES' THEN 1 ELSE 2 END ASC")
+        ->orderBy('latest_chat_time', 'desc')
         ->get();
 
         return view('Support.support', compact('tickets', 'user'));

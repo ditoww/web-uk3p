@@ -42,8 +42,10 @@ class ChatDevController extends Controller
                 'developer.name AS developer_name',
                 'developer.profile_picture AS developer_avatar',
                 'devTickets.priority',
+                DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
             )
-            ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
+            ->orderByRaw("CASE WHEN devTickets.status = 'In Progress' THEN 0 ELSE 1 END ASC")
+            ->orderBy('latest_chat_time', 'DESC')
             ->get();
 
         // Check if any tickets were returned
