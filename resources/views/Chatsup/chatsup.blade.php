@@ -85,15 +85,8 @@
             margin-left: auto;
         }
 
-
         .message.dev a {
             color: #fff;
-        }
-
-        .chat-input-section {
-            background-color: #fff;
-            padding: 16px 20px 10px 20px;
-            border-top: 1px solid #dee2e6;
         }
 
         .chat-input-section {
@@ -132,7 +125,6 @@
             flex: 1;
         }
 
-
         .mark-resolved-btn {
             background-color: #C92020;
             border: none;
@@ -153,6 +145,31 @@
         }
 
         .btn.mark-resolved-btn:disabled {
+            background-color: #6D6969FF;
+            opacity: 0.3;
+            box-shadow: 0 2px 4px rgba(32, 32, 32, 0.3);
+        }
+
+        .reopen-progress-btn {
+            background-color: #0d6efd;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .reopen-progress-btn:hover {
+            background-color: #0b5ed7;
+            box-shadow: 0 4px 6px rgba(11, 94, 215, 0.4);
+        }
+
+        .btn.reopen-progress-btn:active {
+            background-color: #0a58ca;
+        }
+
+        .btn.reopen-progress-btn:disabled {
             background-color: #6D6969FF;
             opacity: 0.3;
             box-shadow: 0 2px 4px rgba(32, 32, 32, 0.3);
@@ -198,27 +215,18 @@
             max-width: 250px;
             margin-bottom: 4px;
             word-break: break-all;
-            /* <-- Tambahkan ini */
             overflow-wrap: anywhere;
-            /* <-- Tambahkan ini */
             margin-top: 16px !important;
         }
 
         .file-box a {
             word-break: break-all;
-            /* <-- Tambahkan ini */
             overflow-wrap: anywhere;
-            /* <-- Tambahkan ini */
             display: inline-block;
-            /* <-- Tambahkan ini */
             max-width: 180px;
-            /* <-- Tambahkan ini, agar link tidak melebar */
             white-space: normal;
-            /* <-- Tambahkan ini */
             text-overflow: ellipsis;
-            /* <-- Tambahkan ini */
             overflow: hidden;
-            /* <-- Tambahkan ini */
             vertical-align: middle;
         }
 
@@ -246,7 +254,6 @@
             font-size: 15px;
             font-weight: 500;
             margin-bottom: 2px;
-
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -288,7 +295,6 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -298,19 +304,16 @@
         }
 
         .ticket-info-bar .status-badge.chuu {
-            /*SEDANG DIPROSES*/
             background: #FFFFEEFF;
             color: #8D6714FF;
         }
 
         .ticket-info-bar .status-badge.shuu {
-            /*SELESAI*/
             background: #F1FFF0FF;
             color: #207513FF;
         }
 
         .ticket-info-bar .status-badge.tei {
-            /*DITUTUP*/
             background: #FFEFEFFF;
             color: #7F1414FF;
         }
@@ -395,7 +398,6 @@
         }
 
         .behindable {
-            /* Kind of hacky but it works. */
             z-index: 200;
         }
 
@@ -452,14 +454,10 @@
         }
 
         @keyframes dotGrowing {
-
-            0%,
-            80%,
-            100% {
+            0%, 80%, 100% {
                 transform: scale(0.8);
                 background-color: #979797;
             }
-
             40% {
                 transform: scale(1.2);
                 background-color: #7D7D7D;
@@ -469,6 +467,20 @@
 @endsection
 
 @section('content')
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show mx-3 mt-3 mb-0" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mx-3 mt-3 mb-0" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @php
         $user = Auth::user();
         $isHistory = $isHistory ?? request()->boolean('history');
@@ -477,7 +489,6 @@
     <div class="d-flex main-content">
         <div class="chat-history p-3">
             @php
-                // Kelas dan ikon status untuk panel kanan
                 $selectedStatusClass = match ($selectedTicket->status) {
                     'Open' => '',
                     'In Progress' => 'chuu',
@@ -514,7 +525,6 @@
                             {{ $ticket->status }}
                         </span>
 
-                        <!-- DROPDOWN ACTION -->
                         <div class="dropdown position-relative" style="z-index: 5;">
                             <button class="btn btn-sm btn-light dropdown-toggle p-1 no-arrow" data-bs-toggle="dropdown"
                                 aria-expanded="false" onclick="event.stopPropagation()">
@@ -530,7 +540,6 @@
                         </div>
                     </div>
 
-                    <!-- LINK UTAMA CARD -->
                     <a href="{{ $isHistory
                         ? route('Chatsup.chatsup', ['ticket_dev' => $ticket->id, 'history' => 1])
                         : route('Chatsup.chatsup', ['ticket_dev' => $ticket->id]) }}"
@@ -562,7 +571,6 @@
         </div>
 
         <div class="chat-panel d-flex flex-column">
-            <!-- Ticket Info Top Bar -->
             <div class="ticket-info-bar">
                 <div class="info-group">
                     <div>
@@ -599,7 +607,6 @@
                     </div>
                 </div>
             </div>
-            <!-- End Ticket Info Top Bar -->
 
             @php
                 if (!function_exists('formatFileSize')) {
@@ -732,6 +739,7 @@
                     <div style="animation: dotGrowing 1s infinite ease-in-out 0.4s;"></div>
                 </div>
             </div>
+
             @if (!$isHistory)
                 <div class='chat-input-section behindable'>
                     <form method="POST" id="ticket-resolver"
@@ -739,18 +747,23 @@
                         onsubmit="return confirm('Apakah Anda yakin untuk menutupkan tiket ini?\nAksi tersebut tidak bisa dibalikkan!')">
                         @csrf
                     </form>
+
+                    <form method="POST" id="reopen-ticket"
+                        action="{{ route('Chatsup.reopen', ['id' => $selectedTicket->id]) }}"
+                        onsubmit="return confirm('Apakah Anda yakin untuk membuka kembali tiket ini?')">
+                        @csrf
+                    </form>
+
                     <form id="chat-form" action="{{ route('Chatsup.store') }}" method="POST"
                         enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="ticket" id="currentTicketID" value="{{ $selectedTicket->id }}">
 
-                        <!-- Image Preview -->
                         <div id="selectedImageContainer" class="mb-2">
                             <img id="selectedImage" src="" alt="Selected Image" class="img-thumbnail img-prev">
                             <button type="button" id="removeImage" class="btn btn-sm btn-danger">x</button>
                         </div>
 
-                        <!-- File Preview -->
                         <div id="selectedFileContainer" class="mb-2" style="display:none;">
                             <div class="file-box">
                                 <i class="bi bi-file-earmark-arrow-down me-2"></i>
@@ -775,6 +788,14 @@
                                 class="btn d-flex align-items-center gap-2 text-white mark-resolved-btn">
                                 <i class="bi bi-x-lg fs-5"></i>
                                 <span class="fw-semibold">Tutup Tiket</span>
+                            </button>
+
+                            <button type="button" id="reopenButton" onclick="manualTrigger(event, 'reopen-ticket')"
+                                @if (trim($selectedTicket->status) !== 'Resolved') disabled @endif
+                                title="Buka kembali jika masih ada bug lanjutan atas case ini"
+                                class="btn d-flex align-items-center gap-2 text-white reopen-progress-btn">
+                                <i class="bi bi-arrow-repeat fs-5"></i>
+                                <span class="fw-semibold">Reopen</span>
                             </button>
                         </div>
 
@@ -815,9 +836,7 @@
 
 @section('scripts')
     @include('partials.fileverifier')
-    <!-- Firebase Configuration -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import {
             initializeApp
         } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
@@ -838,7 +857,6 @@
             getAnalytics
         } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCaBfevesjOCPT3WbTgFQq-_GOXFng55qw",
             authDomain: "real-time-chat-b1212.firebaseapp.com",
@@ -849,13 +867,11 @@
             measurementId: "G-P9PR6MQYEP"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Make Firebase available globally
         window.firebaseApp = app;
         window.firebaseDb = db;
         window.firebaseConfig = firebaseConfig;
@@ -866,7 +882,6 @@
     </script>
 
     <script>
-        // Set user data and ticket ID for real-time chat
         window.userData = {
             id: '{{ Auth::id() }}',
             name: '{{ Auth::user()->name }}',
@@ -887,13 +902,10 @@
             sendAvatar: false
         };
 
-        // FIX: fallback kosong bila tidak ada
         window.initRead = "{{ $readChats ?? '' }}";
     </script>
 
     <script>
-        //Timezone
-
         const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         fetch('/set-timezone', {
@@ -906,7 +918,7 @@
                 timezone: userTimezone
             })
         });
-        // Deklarasi Variabel Global
+
         let selectedImages = [];
         let selectedAtts = [];
         const userProf = "{{ $selectedTicket->support_avatar ?? asset('assetsadmin/img/avatars/default.png') }}";
@@ -952,7 +964,7 @@
             if (ext === "pdf") {
                 return sig === "25504446";
             }
-            if (ext === "docx") { //Apparently a Docx is a zip so... extra precautions ahead!
+            if (ext === "docx") {
                 return await isDocx(f);
             }
             if (ext === "xlsx") {

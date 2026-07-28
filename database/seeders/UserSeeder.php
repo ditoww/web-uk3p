@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,8 +22,8 @@ class UserSeeder extends Seeder
                 'updated_at' => now()
             ],
             [
-                'name' => "Super Admin",
-                'username' => "superadmin",
+                'name' => "Bagus Dwi (Super Admin)",
+                'username' => "bagus_superadmin",
                 'email' => "bag12dwi.s@gmail.com",
                 'password' => Hash::make('123'),
                 'privLevel' => "super_admin",

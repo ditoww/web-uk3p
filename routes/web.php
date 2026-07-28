@@ -201,6 +201,7 @@ Route::middleware(['support'])->group(function () {
     Route::get('/Support/chat', [SupportChatController::class, 'index'])->name('Chatsup.chatsup');
     Route::post('/Support/chat/store', [SupportChatController::class, 'store'])->name('Chatsup.store');
     Route::post('/Support/chat/resolve/{id}', [SupportChatController::class, 'resolveTicket'])->name('Chatsup.resolve');
+    Route::post('/Support/chat/reopen/{id}', [SupportChatController::class, 'reopenTicket'])->name('Chatsup.reopen');
     Route::post('/Support/chat/read/{t}', [SupportChatController::class, 'readIDinRealtime']);
     Route::post('/Support/chat/store-realtime', [SupportChatController::class, 'storeRealtime'])->name('Chatsup.storeRealtime');
 

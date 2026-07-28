@@ -42,10 +42,8 @@ class ChatDevController extends Controller
                 'developer.name AS developer_name',
                 'developer.profile_picture AS developer_avatar',
                 'devTickets.priority',
-                DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
             )
-            ->orderByRaw("CASE WHEN devTickets.status = 'In Progress' THEN 0 ELSE 1 END ASC")
-            ->orderBy('latest_chat_time', 'DESC')
+            ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
             ->get();
 
         // Check if any tickets were returned
@@ -590,41 +588,6 @@ class ChatDevController extends Controller
         $ticket->devID = null;
         $ticket->save();
         return redirect()->route('Chatdev.chatdev');
-    }
-
-    public function reopenTicket(Request $request, $id)
-    {
-    $ticket = DevTicket::findOrFail($id);
-
-    if ($ticket->devID !== Auth::id()) {
-        return back();
-    }
-
-    // Reopen hanya boleh dilakukan dari status Resolved.
-    if (strtolower(trim($ticket->status)) !== 'resolved') {
-        return back()->with('error', 'Hanya tiket dengan status Resolved yang dapat dibuka kembali.');
-    }
-
-    $validated = $request->validate([
-        'target_status' => 'required|in:In Progress,Open',
-    ]);
-
-    $ticket->status = $validated['target_status'];
-
-    // Jika dikembalikan sebagai tiket baru (Open), lepas assignment dev
-    // agar tiket kembali ke antrian dan bisa diklaim ulang.
-    if ($validated['target_status'] === 'Open') {
-        $ticket->devID = null;
-    }
-
-    $ticket->save();
-
-    if ($validated['target_status'] === 'Open') {
-        return redirect()->route('Chatdev.chatdev')
-            ->with('success', 'Tiket dibuka kembali sebagai tiket baru (Open).');
-    }
-
-    return back()->with('success', 'Tiket dibuka kembali dan dilanjutkan (In Progress).');
     }
 
     private function getIDsToRead($id)
