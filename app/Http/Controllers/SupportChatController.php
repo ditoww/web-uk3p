@@ -551,7 +551,7 @@ class SupportChatController extends Controller
     /**
      * Resolve/Close a ticket
      */
-    public function resolve(Request $request, $id) {
+    public function resolveTicket(Request $request, $id) {
         $ticket = DevTicket::findOrFail($id);
         if ($ticket->supportID !== Auth::id()) return back();
         $ticket->status = "Closed";
