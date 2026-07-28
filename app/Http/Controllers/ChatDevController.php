@@ -592,6 +592,41 @@ class ChatDevController extends Controller
         return redirect()->route('Chatdev.chatdev');
     }
 
+    public function reopenTicket(Request $request, $id)
+    {
+    $ticket = DevTicket::findOrFail($id);
+
+    if ($ticket->devID !== Auth::id()) {
+        return back();
+    }
+
+    // Reopen hanya boleh dilakukan dari status Resolved.
+    if (strtolower(trim($ticket->status)) !== 'resolved') {
+        return back()->with('error', 'Hanya tiket dengan status Resolved yang dapat dibuka kembali.');
+    }
+
+    $validated = $request->validate([
+        'target_status' => 'required|in:In Progress,Open',
+    ]);
+
+    $ticket->status = $validated['target_status'];
+
+    // Jika dikembalikan sebagai tiket baru (Open), lepas assignment dev
+    // agar tiket kembali ke antrian dan bisa diklaim ulang.
+    if ($validated['target_status'] === 'Open') {
+        $ticket->devID = null;
+    }
+
+    $ticket->save();
+
+    if ($validated['target_status'] === 'Open') {
+        return redirect()->route('Chatdev.chatdev')
+            ->with('success', 'Tiket dibuka kembali sebagai tiket baru (Open).');
+    }
+
+    return back()->with('success', 'Tiket dibuka kembali dan dilanjutkan (In Progress).');
+    }
+
     private function getIDsToRead($id)
     {
         $ticket = DevTicket::findOrFail($id);

@@ -191,6 +191,35 @@
             box-shadow: none;
         }
 
+        .reopen-progress-btn {
+    background-color: #0d6efd;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+    transition: all 0.3s ease;
+}
+
+.reopen-progress-btn:hover {
+    background-color: #0b5ed7;
+    box-shadow: 0 4px 6px rgba(11, 94, 215, 0.4);
+}
+
+.reopen-new-btn {
+    background-color: #fd7e14;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(253, 126, 20, 0.3);
+    transition: all 0.3s ease;
+}
+
+.reopen-new-btn:hover {
+    background-color: #dc6a02;
+    box-shadow: 0 4px 6px rgba(220, 106, 2, 0.4);
+}
 
         .chat-image-clickable {
             max-width: 250px;
@@ -489,6 +518,12 @@
 @endsection
 
 @section('content')
+    @if (session('success'))
+        <div class="alert alert-success py-2 mb-0">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger py-2 mb-0">{{ session('error') }}</div>
+    @endif
     <div class="d-flex main-content">
         <div class="chat-history p-3">
             <h6 class="fw-bold mb-3">Chat History</h6>
@@ -715,6 +750,18 @@
                     onsubmit="return confirm('Apakah Anda yakin untuk batal mengambil tiket ini?')">
                     @csrf
                 </form>
+                <form method="POST" id="reopen-inprogress-ticket"
+                    action="{{ route('Chatdev.reopen', ['id' => $selectedTicket->id]) }}"
+                    onsubmit="return confirm('Buka kembali tiket ini dan lanjutkan sebagai In Progress? Gunakan ini jika masih ada bug lanjutan yang perlu Anda kerjakan.')">
+                    @csrf
+                    <input type="hidden" name="target_status" value="In Progress">
+                </form>
+                <form method="POST" id="reopen-new-ticket"
+                    action="{{ route('Chatdev.reopen', ['id' => $selectedTicket->id]) }}"
+                    onsubmit="return confirm('Buka kembali tiket ini sebagai tiket baru (Open)? Tiket akan dilepas dari Anda dan kembali ke antrian.')">
+                    @csrf
+                    <input type="hidden" name="target_status" value="Open">
+                </form>
                 <form id="chat-form" action="{{ route('Chatdev.store') }}" method="POST" enctype="multipart/form-data"
                     class="w-100">
                     @csrf
@@ -745,19 +792,39 @@
                             <i class="bi bi-send-fill"></i>
                         </button>
                         <div class="d-flex flex-column gap-2">
-                            <button type="button" id="resolverButton" onclick="manualTrigger(event, 'ticket-resolver')"
-                                class="btn d-flex align-items-center gap-2 text-white mark-resolved-btn"
-                                @if (trim($selectedTicket->status) !== 'In Progress') disabled @endif style="height:40px;">
-                                <i class="bi bi-check-circle-fill fs-5"></i>
-                                <span class="fw-semibold d-none d-sm-inline">Mark as Resolved</span>
-                            </button>
-                            <button type="button" id="resolverButton" onclick="manualTrigger(event, 'undo-ticket')"
-                                class="btn d-flex align-items-center gap-2 text-white undo-btn"
-                                @if (trim($selectedTicket->status) !== 'In Progress') disabled @endif style="height:40px;">
-                                <i class="bi bi-x-circle-fill fs-5"></i>
-                                <span class="fw-semibold d-none d-sm-inline">Batal Ambil Tiket</span>
-                            </button>
-                        </div>
+    @if (trim($selectedTicket->status) === 'Resolved')
+        {{-- Tiket sudah Resolved: sediakan opsi reopen jika ternyata masih ada
+             bug lanjutan atas case yang sudah diselesaikan. --}}
+        <button type="button" onclick="manualTrigger(event, 'reopen-inprogress-ticket')"
+            class="btn d-flex align-items-center gap-2 text-white reopen-progress-btn"
+            title="Masih ada bug lanjutan, lanjutkan pengerjaan tiket ini" style="height:40px;">
+            <i class="bi bi-arrow-repeat fs-5"></i>
+            <span class="fw-semibold d-none d-sm-inline">Reopen (In Progress)</span>
+        </button>
+        <button type="button" onclick="manualTrigger(event, 'reopen-new-ticket')"
+            class="btn d-flex align-items-center gap-2 text-white reopen-new-btn"
+            title="Lepas tiket ini kembali ke antrian sebagai tiket baru" style="height:40px;">
+            <i class="bi bi-arrow-counterclockwise fs-5"></i>
+            <span class="fw-semibold d-none d-sm-inline">Reopen (New)</span>
+        </button>
+    @else
+        <button type="button" id="resolverButton"
+            onclick="manualTrigger(event, 'ticket-resolver')"
+            class="btn d-flex align-items-center gap-2 text-white mark-resolved-btn"
+            @if (trim($selectedTicket->status) !== 'In Progress') disabled @endif
+            style="height:40px;">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <span class="fw-semibold d-none d-sm-inline">Mark as Resolved</span>
+        </button>
+        <button type="button" id="undoButton" onclick="manualTrigger(event, 'undo-ticket')"
+            class="btn d-flex align-items-center gap-2 text-white undo-btn"
+            @if (trim($selectedTicket->status) !== 'In Progress') disabled @endif
+            style="height:40px;">
+            <i class="bi bi-x-circle-fill fs-5"></i>
+            <span class="fw-semibold d-none d-sm-inline">Batal Ambil Tiket</span>
+        </button>
+    @endif
+</div>
                     </div>
 
                     <!-- Row 2: attachment buttons -->

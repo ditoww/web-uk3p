@@ -179,6 +179,7 @@ Route::middleware(['dev'])->group(function () {
     Route::get('/dev/taskticket', [DeveloperController::class, 'index'])->name('Developer.developer');
     Route::post('/dev/chatdev/resolve/{id}', [ChatDevController::class, 'resolveTicket'])->name('Chatdev.resolve');
     Route::post('/dev/chatdev/undo/{id}', [ChatDevController::class, 'undoTicket'])->name('Chatdev.undo');
+    Route::post('/dev/chatdev/reopen/{id}', [ChatDevController::class, 'reopenTicket'])->name('Chatdev.reopen');
     Route::get('/developer/ticket/{id}', [DeveloperController::class, 'detail'])->name('developer.ticket.detail');
     Route::post('/developer/ticket/{id}/claim', [DeveloperController::class, 'claim'])->name('developer.ticket.claim');
     Route::post('/dev/chatdev/read/{t}', [ChatDevController::class, 'readIDinRealtime']);
