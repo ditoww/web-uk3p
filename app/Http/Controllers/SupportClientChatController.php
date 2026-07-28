@@ -442,6 +442,7 @@ class SupportClientChatController extends Controller
 
         // Ambil dari model DevRole, alias roleName -> name agar Blade tetap pakai $role->name
         $roles = DevRole::query()
+            ->where('isDeleted', 0)
             ->select('id', DB::raw('roleName as name'))
             ->orderBy('roleName')
             ->get();
