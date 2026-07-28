@@ -590,6 +590,31 @@ class ChatDevController extends Controller
         return redirect()->route('Chatdev.chatdev');
     }
 
+    public function reopenTicket($id)
+    {
+        try {
+            $ticket = DevTicket::findOrFail($id);
+            if ($ticket->devID !== Auth::id()) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membuka tiket ini.');
+            }
+            if ($ticket->status !== 'Resolved') {
+                return redirect()->back()->with('error', 'Tiket hanya bisa dibuka kembali jika statusnya Resolved.');
+            }
+            $ticket->status = 'In Progress';
+            $ticket->save();
+            DB::table('devChats')->insert([
+                'ticket_id' => $ticket->id,
+                'sender' => 'system',
+                'response' => 'Tiket dibuka kembali oleh ' . Auth::user()->name . ' (' . Auth::user()->email . ')',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return redirect()->back()->with('success', 'Tiket berhasil dibuka kembali.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+    
     private function getIDsToRead($id)
     {
         $ticket = DevTicket::findOrFail($id);
