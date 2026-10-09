@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SupportTicket; // Pastikan model ini sudah di-import
 use App\Models\DevChat;
 use App\Models\DevRole;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,9 @@ class DeveloperController extends Controller
         // Tambahkan pesan system ke chat bahwa developer bergabung ke chat
         try {
             $devName = Auth::user()->name ?? 'Developer';
+            $ticketData = SupportTicket::where('id', $id)->first();
+            $supportData = User::where('id', $ticketData->supportID)->first();
+            $senderPhone = $supportData->phone_number;
             DevChat::create([
                 'ticket_id' => (int)$id,
                 'sender' => 'system',
@@ -107,6 +111,7 @@ class DeveloperController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            send_notif_wa($senderPhone, 'Tiket *' . $ticketData->title . '* telah diklaim oleh developer: *' . $devName . '*');
         } catch (\Throwable $e) {
             // Jangan mengganggu alur jika gagal menulis pesan system
         }

@@ -525,7 +525,7 @@
         <div class="alert alert-danger py-2 mb-0">{{ session('error') }}</div>
     @endif
     <div class="d-flex main-content">
-        <div class="chat-history p-3">
+        <div class="chat-history p-3" data-status-order="In Progress,Resolved">
             <h6 class="fw-bold mb-3">Chat History</h6>
             @foreach ($tickets as $ticket)
                 @php
@@ -555,7 +555,9 @@
                 @endphp
 
                 <a href="{{ route('Chatdev.chatdev', ['ticket' => $ticket->id]) }}" class="text-decoration-none text-dark">
-                    <div class="ticket-card mb-2 p-2 rounded {{ $isActive ? 'bg-light' : '' }}" id="tc-{{ $ticket->id }}">
+                    <div class="ticket-card mb-2 p-2 rounded {{ $isActive ? 'bg-light' : '' }}" id="tc-{{ $ticket->id }}"
+                        data-priority="{{ $ticket->priority }}"
+                        data-latest="{{ \Carbon\Carbon::parse($ticket->latest_chat_time ?? $ticket->created_at)->getTimestampMs() }}">
                         <span class="badge {{ $statusClass }} badge-status mb-1">{{ $ticket->status }}</span>
                         <div class="fw-semibold text-primary">
                             TK-{{ \Carbon\Carbon::parse($ticket->created_at)->format('Y') }}-{{ str_pad($ticket->id, 3, '0', STR_PAD_LEFT) }}
@@ -762,6 +764,7 @@
                     @csrf
                     <input type="hidden" name="target_status" value="Open">
                 </form>
+                @php $chatLocked = in_array(trim($selectedTicket->status), ['Closed', 'Resolved']); @endphp
                 <form id="chat-form" action="{{ route('Chatdev.store') }}" method="POST" enctype="multipart/form-data"
                     class="w-100">
                     @csrf
@@ -783,9 +786,9 @@
                     <!-- Row 1: textarea + send + resolve -->
                     <div class="d-flex align-items-start gap-2 chat-input-row">
                         <div class="flex-grow-1 position-relative">
-                            <textarea class="form-control auto-resize-textarea" name="message" @if ($selectedTicket->status === 'Closed') disabled @endif
+                            <textarea class="form-control auto-resize-textarea" name="message" @if ($chatLocked) disabled @endif
                                 id="messageTextarea"
-                                placeholder="{{ $selectedTicket->status === 'Closed' ? 'Anda tidak dapat chat pada tiket yang sudah ditutup.' : 'Ketik Pesan...' }}"></textarea>
+                                placeholder="{{ $selectedTicket->status === 'Closed' ? 'Anda tidak dapat chat pada tiket yang sudah ditutup.' : ($chatLocked ? 'Tiket sudah Resolved. Klik Reopen untuk melanjutkan chat.' : 'Ketik Pesan...') }}"></textarea>
                         </div>
                         <button type="submit" id="submitButton" class="btn btn-primary px-3 py-2 disabled"
                             style="height:40px;">
@@ -831,14 +834,14 @@
                     <div class="d-flex gap-2 pt-2 flex-wrap">
                         <input type="file" name="attachment[]" id="attachment" class="d-none" multiple disabled>
                         <button type="button" class="btn btn-sm btn-outline-secondary" title="Lampirkan File"
-                            @if ($selectedTicket->status !== 'Closed') onclick="document.getElementById('attachment').click();" @endif>
+                            @if (!$chatLocked) onclick="document.getElementById('attachment').click();" @endif>
                             <i class="bi bi-paperclip"></i> File
                         </button>
 
                         <input type="file" name="image[]" id="image" class="d-none"
                             accept=".jpg,.jpeg,.webp,.png" multiple disabled>
                         <button type="button" class="btn btn-sm btn-outline-secondary" title="Lampirkan Gambar"
-                            @if ($selectedTicket->status !== 'Closed') onclick="document.getElementById('image').click();" @endif>
+                            @if (!$chatLocked) onclick="document.getElementById('image').click();" @endif>
                             <i class="bi bi-image"></i> Gambar
                         </button>
 
@@ -1022,6 +1025,7 @@
         };
     </script>
     <script src="{{ asset('js/realtime-chat-min.js') }}" defer></script>
+    <script type="module" src="{{ asset('js/ticket-list-sort.js') }}"></script>
     <script src="{{ asset('js/chatdev-min.js') }}" defer></script>
 
     <script>

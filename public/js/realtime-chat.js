@@ -377,7 +377,14 @@ class RealtimeChat {
                 s.classList.toggle("shuu", !0),
                 s.classList.toggle("tei", !1),
                 (s.innerHTML =
-                    '\n            <i class="bi bi-check2-circle"></i>\n            Resolved\n            '));
+                    '\n            <i class="bi bi-check2-circle"></i>\n            Resolved\n            '),
+                (document.getElementById("reopenButton").disabled = !1),
+                (document.getElementById("attachment").disabled = !0),
+                (document.getElementById("image").disabled = !0),
+                (document.querySelector("textarea").disabled = !0),
+                (document.querySelector("textarea").value = ""),
+                (document.querySelector("textarea").placeholder =
+                    "Tiket sudah Resolved. Klik Reopen untuk melanjutkan chat."));
         }
     }
     async sendMessage(e, t = []) {

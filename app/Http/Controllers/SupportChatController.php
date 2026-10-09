@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\DevTicket;
 use App\Models\DevChat;
+use App\Models\User;
 use App\Rules\StrictDocx;
 use App\Rules\StrictXlsx;
 //use App\Services\WhatsAppNotificationService;
@@ -27,11 +28,11 @@ class SupportChatController extends Controller
             'users.email as developer_email',
             DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
         )
-        ->leftJoin('users', 'users.id', '=', 'devTickets.devID')
-        ->where('devTickets.supportID', auth()->id())
-        ->where('devTickets.isDeleted', 0)
-        ->orderByRaw("CASE WHEN devTickets.status = 'In Progress' THEN 0 WHEN devTickets.status = 'Open' THEN 1 ELSE 2 END ASC")
-        ->orderBy('latest_chat_time', 'DESC');
+            ->leftJoin('users', 'users.id', '=', 'devTickets.devID')
+            ->where('devTickets.supportID', auth()->id())
+            ->where('devTickets.isDeleted', 0)
+            ->orderByRaw("CASE devTickets.status WHEN 'In Progress' THEN 0 WHEN 'Open' THEN 1 WHEN 'Resolved' THEN 2 ELSE 3 END ASC")
+            ->orderBy('latest_chat_time', 'DESC');
 
         $tickets = $isHistory
             ? $query->where('devTickets.status', 'Closed')->get()
@@ -61,7 +62,7 @@ class SupportChatController extends Controller
             )
             ->orderBy('devChats.created_at', 'asc')
             ->get();
-        
+
         $attachments = DB::table('devAttachments')
             ->whereIn('chatID', $messages->pluck('id'))
             ->get()
@@ -77,7 +78,7 @@ class SupportChatController extends Controller
             foreach ($msgAttachments as $att) {
                 $isImage = in_array(strtolower($att->fileExtension), ['jpg', 'jpeg', 'png', 'webp']);
                 $normalizedUrl = $isImage ? 'chat_images/' .  $att->fileName
-                                          : 'chat_attachments/' . $att->fileName;
+                    : 'chat_attachments/' . $att->fileName;
 
                 $width = null;
                 $height = null;
@@ -103,8 +104,8 @@ class SupportChatController extends Controller
                 }
 
                 $attList[] = $isImage
-                  ? ['type' => 'image', 'url' => $normalizedUrl, 'name' => $att->fileName, 'size' => $att->fileSize, 'width' => $displayWidth, 'height' => $displayHeight]
-                  : ['type' => 'file',  'url' => $normalizedUrl, 'name' => $att->fileName, 'size' => $att->fileSize];
+                    ? ['type' => 'image', 'url' => $normalizedUrl, 'name' => $att->fileName, 'size' => $att->fileSize, 'width' => $displayWidth, 'height' => $displayHeight]
+                    : ['type' => 'file',  'url' => $normalizedUrl, 'name' => $att->fileName, 'size' => $att->fileSize];
             }
 
             $timezone = session('user_timezone', config('app.timezone'));
@@ -148,6 +149,10 @@ class SupportChatController extends Controller
         if (!DB::table('devTickets')->where('id', $ticketId)->where('supportID', $userId)) return back();
 
         // Validasi input message
+        if (in_array(DB::table('devTickets')->where('id', $ticketId)->value('status'), ['Closed', 'Resolved'])) {
+            return back()->with('error', 'Tiket sudah Resolved. Klik Reopen untuk melanjutkan chat.');
+        }
+
         if (!$message && !$request->hasFile('attachment') && !$request->hasFile('image')) {
             return back()->with('error', 'Message cannot be empty.');
         }
@@ -171,7 +176,7 @@ class SupportChatController extends Controller
             $attachmentCount = DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
+                ->whereIn('devAttachments.fileExtension', ['docx', 'pdf', 'xlsx'])
                 ->count();
 
             foreach ($request->file('attachment') as $idx => $file) {
@@ -197,7 +202,7 @@ class SupportChatController extends Controller
                         mkdir(public_path('chat_attachments'), 0775, true);
                     }
                 }
-                $file->move(public_path('chat_attachments/'), $newFileName);   
+                $file->move(public_path('chat_attachments/'), $newFileName);
                 $filePath = asset('chat_attachments/' . $newFileName);
 
                 DB::table('devAttachments')->insert([
@@ -217,7 +222,7 @@ class SupportChatController extends Controller
             $imageCount = DB::table('devAttachments')
                 ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                 ->where('devChats.ticket_id', $ticketId)
-                ->whereIn('devAttachments.fileExtension', ['jpg','jpeg','png','webp'])
+                ->whereIn('devAttachments.fileExtension', ['jpg', 'jpeg', 'png', 'webp'])
                 ->count();
 
             foreach ($request->file('image') as $idx => $gambar) {
@@ -277,7 +282,7 @@ class SupportChatController extends Controller
                     'fileName'     => $namaGambar,
                     'filePath'     => $gambarUrl,
                     'fileSize'     => $finalSize,
-                    'fileExtension'=> $gambar->getClientOriginalExtension(),
+                    'fileExtension' => $gambar->getClientOriginalExtension(),
                     'created_at'   => now(),
                     'updated_at'   => now(),
                 ]);
@@ -302,13 +307,14 @@ class SupportChatController extends Controller
                 ]);
             }
         } catch (\Throwable $e) {}*/
-        
+
         // Redirect kembali ke halaman tiket dengan pesan sukses
         return redirect()->route('Chatsup.chatsup', parameters: ['ticket_dev' => $ticketId])
-                         ->with('success', 'Message sent successfully.');
+            ->with('success', 'Message sent successfully.');
     }
 
-    private function getIDsToRead($id) {
+    private function getIDsToRead($id)
+    {
         $ticket = DevTicket::findOrFail($id);
         $timezone = session('user_timezone', config('app.timezone'));
 
@@ -321,18 +327,19 @@ class SupportChatController extends Controller
         $dayStart = Carbon::parse($latestChat->created_at)->timezone($timezone)->startOfDay();
 
         $ids = DevChat::where('ticket_id', $ticket->id)
-        ->where('sender', 'dev')
-        ->whereBetween('created_at', [
-            $dayStart->copy()->timezone(config('app.timezone')),
-            $dayStart->copy()->endOfDay()->timezone(config('app.timezone'))
-        ])
-        ->pluck('id')
-        ->toArray();
+            ->where('sender', 'dev')
+            ->whereBetween('created_at', [
+                $dayStart->copy()->timezone(config('app.timezone')),
+                $dayStart->copy()->endOfDay()->timezone(config('app.timezone'))
+            ])
+            ->pluck('id')
+            ->toArray();
 
         return $ids;
     }
 
-    public function readIDinRealtime(Request $request, DevTicket $t) {
+    public function readIDinRealtime(Request $request, DevTicket $t)
+    {
         $request->validate([
             'ids' => ['required', 'regex:/^\d+(,\d+)*$/'],
         ]);
@@ -355,10 +362,10 @@ class SupportChatController extends Controller
 
         if (!DB::table('devTickets')->where('id', $ticketId)->where('supportID', $userId)) return back();
 
-         // Validasi status tiket
+        // Validasi status tiket
         $ticket = DB::table('devTickets')->where('id', $ticketId)->first();
-        if (!$ticket || ($ticket->status === 'Closed')) {
-            return response()->json(['error' => 'Tiket belum diambil oleh Developer'], 403);
+        if (!$ticket || in_array($ticket->status, ['Closed', 'Resolved'])) {
+            return response()->json(['error' => 'Tiket sudah Resolved atau ditutup'], 403);
         }
 
         // Validate request
@@ -386,10 +393,10 @@ class SupportChatController extends Controller
             if ($request->hasFile('attachment')) {
                 foreach ($request->file('attachment') as $idx => $file) {
                     $attachmentCount = DB::table('devAttachments')
-                    ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
-                    ->where('devChats.ticket_id', $ticketId)
-                    ->whereIn('devAttachments.fileExtension', ['docx','pdf','xlsx'])
-                    ->count();
+                        ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
+                        ->where('devChats.ticket_id', $ticketId)
+                        ->whereIn('devAttachments.fileExtension', ['docx', 'pdf', 'xlsx'])
+                        ->count();
                     // For now, we'll store the attachment info
                     // In a real implementation, you'd want to handle file uploads properly
                     $extension = strtolower($file->getClientOriginalExtension());
@@ -414,7 +421,7 @@ class SupportChatController extends Controller
                             mkdir(public_path('chat_attachments'), 0775, true);
                         }
                     }
-                    $file->move(public_path('chat_attachments/'), $newFileName);   
+                    $file->move(public_path('chat_attachments/'), $newFileName);
                     $filePath = asset('chat_attachments/' . $newFileName);
 
                     DB::table('devAttachments')->insert([
@@ -438,10 +445,10 @@ class SupportChatController extends Controller
             }
 
             if ($request->hasFile('image')) {
-                 $imageCount = DB::table('devAttachments')
+                $imageCount = DB::table('devAttachments')
                     ->join('devChats', 'devAttachments.chatID', '=', 'devChats.id')
                     ->where('devChats.ticket_id', $ticketId)
-                    ->whereIn('devAttachments.fileExtension', ['jpg','jpeg','png','webp'])
+                    ->whereIn('devAttachments.fileExtension', ['jpg', 'jpeg', 'png', 'webp'])
                     ->count();
 
                 foreach ($request->file('image') as $idx => $gambar) {
@@ -542,7 +549,6 @@ class SupportChatController extends Controller
                 'sender' => 'support',
                 'senderId' => $userId
             ]);
-
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to store message: ' . $e->getMessage()], 500);
         }
@@ -551,11 +557,17 @@ class SupportChatController extends Controller
     /**
      * Resolve/Close a ticket
      */
-    public function resolveTicket(Request $request, $id) {
+    public function resolveTicket(Request $request, $id)
+    {
         $ticket = DevTicket::findOrFail($id);
         if ($ticket->supportID !== Auth::id()) return back();
         $ticket->status = "Closed";
         $ticket->save();
+
+        $developerData = User::where('id', $ticket->devID)->first();
+        $developerNumber = $developerData->phone_number;
+        send_notif_wa($developerNumber, 'Tiket *' . $ticket->title . '* telah ditutup oleh support: *' . Auth::user()->name . '*');
+
         return back();
     }
 
@@ -570,21 +582,21 @@ class SupportChatController extends Controller
         try {
             // Cari ticket berdasarkan ID
             $ticket = DevTicket::findOrFail($id);
-            
+
             // Validasi kepemilikan ticket (hanya support yang bertanggung jawab bisa reopen)
             if ($ticket->supportID !== Auth::id()) {
                 return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membuka tiket ini.');
             }
-            
+
             // Cek apakah ticket berstatus 'Resolved' (hanya bisa reopen jika resolved)
             if ($ticket->status !== 'Resolved') {
                 return redirect()->back()->with('error', 'Tiket hanya bisa dibuka kembali jika statusnya Resolved.');
             }
-            
+
             // Ubah status menjadi 'In Progress'
             $ticket->status = 'In Progress';
             $ticket->save();
-            
+
             // Tambahkan pesan sistem ke chat
             DB::table('devChats')->insert([
                 'ticket_id' => $ticket->id,
@@ -593,9 +605,11 @@ class SupportChatController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            
+            $developerData = User::where('id', $ticket->devID)->first();
+            $developerNumber = $developerData->phone_number;
+            send_notif_wa($developerNumber, 'Tiket *' . $ticket->title . '* telah dibuka kembali oleh support: *' . Auth::user()->name . '*');
+
             return redirect()->back()->with('success', 'Tiket berhasil dibuka kembali.');
-            
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
@@ -604,7 +618,7 @@ class SupportChatController extends Controller
     private function formatPhone(?string $raw): ?string
     {
         if (!$raw) return null;
-        $clean = preg_replace('/[^0-9]/','', $raw);
+        $clean = preg_replace('/[^0-9]/', '', $raw);
         $clean = ltrim($clean, '0');
         return $clean;
     }

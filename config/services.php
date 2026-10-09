@@ -39,4 +39,8 @@ return [
         'microservice_url' => env('WHATSAPP_MICROSERVICE_URL', 'http://localhost:4001')
     ],
 
+    'n8n' => [
+        'notif_ticketing_url' => env('N8N_NOTIF_TICKETING_URL'),
+    ],
+
 ];

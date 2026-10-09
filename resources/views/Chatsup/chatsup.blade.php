@@ -487,7 +487,7 @@
     @endphp
 
     <div class="d-flex main-content">
-        <div class="chat-history p-3">
+        <div class="chat-history p-3" data-status-order="In Progress,Open,Resolved,Closed">
             @php
                 $selectedStatusClass = match ($selectedTicket->status) {
                     'Open' => '',
@@ -518,7 +518,8 @@
                 @endphp
 
                 <div class="ticket-card mb-2 p-2 rounded position-relative {{ $isActive ? 'bg-light' : '' }}"
-                    id="tc-{{ $ticket->id }}">
+                    id="tc-{{ $ticket->id }}"
+                    data-latest="{{ \Carbon\Carbon::parse($ticket->latest_chat_time ?? $ticket->created_at)->getTimestampMs() }}">
 
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="badge {{ $statusClass }} badge-status mb-1">
@@ -754,6 +755,7 @@
                         @csrf
                     </form>
 
+                    @php $chatLocked = in_array(trim($selectedTicket->status), ['Closed', 'Resolved']); @endphp
                     <form id="chat-form" action="{{ route('Chatsup.store') }}" method="POST"
                         enctype="multipart/form-data">
                         @csrf
@@ -774,9 +776,9 @@
 
                         <div class="chat-input-container">
                             <div class="textarea-wrapper">
-                                <textarea class="form-control auto-resize-textarea" @if ($selectedTicket->status === 'Closed') disabled @endif name="message"
+                                <textarea class="form-control auto-resize-textarea" @if ($chatLocked) disabled @endif name="message"
                                     id="messageTextarea"
-                                    placeholder="{{ $selectedTicket->status === 'Closed' ? 'Anda tidak dapat chat pada tiket yang sudah ditutup.' : 'Ketik Pesan...' }}"></textarea>
+                                    placeholder="{{ $selectedTicket->status === 'Closed' ? 'Anda tidak dapat chat pada tiket yang sudah ditutup.' : ($chatLocked ? 'Tiket sudah Resolved. Klik Reopen untuk melanjutkan chat.' : 'Ketik Pesan...') }}"></textarea>
                             </div>
 
                             <button type="submit" id="submitButton"
@@ -803,14 +805,14 @@
                             <input type="file" name="attachment[]" id="attachment" class="d-none"
                                 accept=".docx,.pdf,.xlsx" multiple disabled>
                             <button type="button" class="btn btn-sm btn-outline-secondary"
-                                @if ($selectedTicket->status !== 'Closed') onclick="document.getElementById('attachment').click();" @endif>
+                                @if (!$chatLocked) onclick="document.getElementById('attachment').click();" @endif>
                                 <i class="bi bi-paperclip"></i> File
                             </button>
 
                             <input type="file" name="image[]" id="image" class="d-none"
                                 accept=".jpg,.jpeg,.webp,.png" multiple disabled>
                             <button type="button" class="btn btn-sm btn-outline-secondary"
-                                @if ($selectedTicket->status !== 'Closed') onclick="document.getElementById('image').click();" @endif>
+                                @if (!$chatLocked) onclick="document.getElementById('image').click();" @endif>
                                 <i class="bi bi-image"></i> Gambar
                             </button>
 
@@ -976,4 +978,5 @@
     </script>
     <script src="{{ asset('js/realtime-chat.js') }}"></script>
     <script src="{{ asset('js/chatdev.js') }}"></script>
+    <script type="module" src="{{ asset('js/ticket-list-sort.js') }}"></script>
 @endsection

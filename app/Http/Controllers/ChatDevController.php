@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\DevTicket;
 use App\Models\DevChat;
+use App\Models\User;
 use App\Rules\StrictDocx;
 use App\Rules\StrictExe;
 use App\Rules\StrictXlsx;
@@ -42,8 +43,11 @@ class ChatDevController extends Controller
                 'developer.name AS developer_name',
                 'developer.profile_picture AS developer_avatar',
                 'devTickets.priority',
+                DB::raw('COALESCE((SELECT MAX(created_at) FROM devChats WHERE devChats.ticket_id = devTickets.id), devTickets.created_at) as latest_chat_time')
             )
+            ->orderByRaw("CASE devTickets.status WHEN 'In Progress' THEN 0 ELSE 1 END ASC")
             ->orderByRaw('CASE WHEN devTickets.priority IS NULL THEN 1 ELSE 0 END, devTickets.priority ASC')
+            ->orderBy('latest_chat_time', 'DESC')
             ->get();
 
         // Check if any tickets were returned
@@ -176,6 +180,10 @@ class ChatDevController extends Controller
         if (!DB::table('devTickets')->where('id', $ticketId)->where('devID', $userId)) return back();
 
         // Validasi input message
+        if (in_array(DB::table('devTickets')->where('id', $ticketId)->value('status'), ['Closed', 'Resolved'])) {
+            return back()->with('error', 'Tiket sudah Resolved. Klik Reopen untuk melanjutkan chat.');
+        }
+
         if (!$message && !$request->hasFile('attachment') && !$request->hasFile('image')) {
             return back()->with('error', 'Message cannot be empty.');
         }
@@ -343,7 +351,7 @@ class ChatDevController extends Controller
 
         // Validasi status tiket
         $ticket = DB::table('devTickets')->where('id', $ticketId)->first();
-        if (!$ticket || ($ticket->status !== 'In Progress' && $ticket->status !== 'Resolved')) {
+        if (!$ticket || $ticket->status !== 'In Progress') {
             return response()->json(['error' => 'Tiket belum diambil oleh Developer atau ditutup'], 403);
         }
 
@@ -572,6 +580,9 @@ class ChatDevController extends Controller
         if (strtolower($ticket->status) === "closed") return back();
         $ticket->status = "Resolved";
         $ticket->save();
+        $supportData = User::where('id', $ticket->supportID)->first();
+        $supportNumber = $supportData->phone_number;
+        send_notif_wa($supportNumber, 'Tiket *' . $ticket->title . '* telah diselesaikan oleh developer: *' . Auth::user()->name . '*');
         return back();
     }
 
@@ -609,12 +620,15 @@ class ChatDevController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            $supportData = User::where('id', $ticket->supportID)->first();
+            $supportNumber = $supportData->phone_number;
+            send_notif_wa($supportNumber, 'Tiket *' . $ticket->title . '* telah dibuka kembali oleh developer: *' . Auth::user()->name . '*');
             return redirect()->back()->with('success', 'Tiket berhasil dibuka kembali.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
-    
+
     private function getIDsToRead($id)
     {
         $ticket = DevTicket::findOrFail($id);
