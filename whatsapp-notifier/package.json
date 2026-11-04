@@ -1,0 +1,17 @@
+{
+  "name": "whatsapp-notifier",
+  "version": "1.0.0",
+  "description": "Simple Node.js service to send WhatsApp notifications when chat replies arrive.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "express": "^4.19.2",
+    "pino": "^9.3.2",
+    "pino-pretty": "^11.2.2",
+    "zod": "^3.23.8"
+  }
+}
