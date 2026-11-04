@@ -10,67 +10,25 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        $password = env('SEED_ADMIN_PASSWORD');
+
+        if (!$password || strlen($password) < 8) {
+            throw new \RuntimeException(
+                'Isi SEED_ADMIN_PASSWORD di .env (minimal 8 karakter) sebelum menjalankan seeder.'
+            );
+        }
+
         $users = [
             [
-                'name' => "Aaron Haydes",
-                'username' => "Aaron",
-                'email' => "Aaron.esteban@gmail.com",
-                'password' => Hash::make('123'),
-                'privLevel' => "super_admin",
-                'phone_number' => "08123456789",
+                'name' => 'Super Admin',
+                'username' => 'superadmin',
+                'email' => 'alditochristianputra@gmail.com',
+                'password' => Hash::make($password),
+                'privLevel' => 'super_admin',
+                'phone_number' => '08xxxxxxxxxx',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
-            [
-                'name' => "Bagus Dwi (Super Admin)",
-                'username' => "bagus_superadmin",
-                'email' => "bag12dwi.s@gmail.com",
-                'password' => Hash::make('123'),
-                'privLevel' => "super_admin",
-                'phone_number' => "081234567890",
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'name' => "Admin 1",
-                'username' => "admin1",
-                'email' => "admin1@ticketing.dev",
-                'password' => Hash::make('123'),
-                'privLevel' => "admin",
-                'phone_number' => "081234567891",
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'name' => "Developer 1",
-                'username' => "dev1",
-                'email' => "dev1@ticketing.dev",
-                'password' => Hash::make('123'),
-                'privLevel' => "developer",
-                'phone_number' => "081234567892",
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'name' => "Supervisor",
-                'username' => "spv",
-                'email' => "spv@ticketing.dev",
-                'password' => Hash::make('123'),
-                'privLevel' => "spv",
-                'phone_number' => "081234567893",
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'name' => "Support 1",
-                'username' => "support1",
-                'email' => "support1@ticketing.dev",
-                'password' => Hash::make('123'),
-                'privLevel' => "support",
-                'phone_number' => "081234567894",
-                'created_at' => now(),
-                'updated_at' => now()
-            ]
         ];
 
         foreach ($users as $user) {

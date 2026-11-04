@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ApplicationController;
@@ -35,25 +36,8 @@ use App\Http\Controllers\UserController;
 |
 */
 
-Route::get('/', function () {
-    if (auth()->check()) {
-        switch (auth()->user()->privLevel) {
-            case 'admin':
-                return redirect()->route('akunadmin');
-            case 'spv':
-                return redirect()->route('SPV.spv');
-            case 'developer':
-                return redirect()->route('Developer.developer');
-            case 'support':
-                return redirect()->route('Support.support');
-            case 'super_admin':
-                return redirect()->route('admin.admin');
-            default:
-                return redirect('/login')->withErrors(['Unauthorized role']);
-        }
-    }
-    return redirect()->route('login');
-});
+// Halaman publik UK3P UNESA (tanpa login)
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 //Dashboard admin : Akun Admin
 Route::middleware(['superadmin'])->group(function () {
