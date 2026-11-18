@@ -58,7 +58,7 @@
   <div>
     <div class="d-flex align-items-center mb-4 mt-3">
       <img src="{{ asset('assetsadmin/img/div.png') }}" alt="Logo" width="40" height="40" class="me-2" />
-      <span class="fw-bold fs-5">TickDesk</span>
+      <span class="fw-bold fs-5">UKKKP UNESA</span>
     </div>
     <nav class="nav flex-column">
       <a class="nav-link {{ request()->is('dev/taskticket*') ? 'active' : '' }}" href="{{ route('Developer.developer') }}">

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="icon" type="image/x-icon" href="{{asset('assetsadmin')}}/img/div.png" />
-  <title>TickDesk Login</title>
+  <title>UKKKP UNESA Login</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
@@ -69,8 +69,8 @@
 
   <div class="login-card text-center">
     <!-- Ganti URL logo di bawah jika perlu -->
-    <img src="{{asset('assetsadmin')}}/img/email-logo.png" alt="TickDesk Logo" class="login-logo" />
-    <h5 class="fw-bold">TickDesk</h5>
+    <img src="{{asset('img/logo-ukkkp.jpg')}}" alt="UKKKP UNESA Logo" class="login-logo" />
+    <h5 class="fw-bold">UKKKP UNESA</h5>
     <p class="mt-2 mb-4 text-muted"><small>Selamat Datang! Mohon isi kredensial Anda.</small></p>
     @if (session('status'))
       <div style="color: green; font-size: 14px; margin-bottom: 16px;">

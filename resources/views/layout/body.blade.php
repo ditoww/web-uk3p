@@ -11,7 +11,7 @@
               <span class="app-brand-logo">
                 <img src="{{asset('assetsadmin')}}/img/div.png" width="50" height="50" class="cl" alt="">
               </span>
-              <span class="app-brand-text demo menu-text fw-bold">TickDesk</span>
+              <span class="app-brand-text demo menu-text fw-bold">UKKKP UNESA</span>
             </a>
 
             <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
@@ -72,7 +72,7 @@
                     <script>
                       document.write(new Date().getFullYear());
                     </script>
-                    , Powered By <a href="#" target="_blank" class="fw-semibold">TickDesk</a>
+                    , Powered By <a href="#" target="_blank" class="fw-semibold">UKKKP UNESA</a>
                   </div>
                   <div>
                     {{-- <a onclick="showAlert()" class="footer-link me-4"

@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>TickDesk - Task Developer</title>
+    <title>UKKKP UNESA - Task Developer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
     <style>
@@ -183,7 +183,7 @@
     <nav class="navbar navbar-light bg-white shadow-sm">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
-                <span class="navbar-brand mb-0">TickDesk</span>
+                <span class="navbar-brand mb-0">UKKKP UNESA</span>
                 <span class="navbar-subtitle">Pengurutan Prioritas Tiket Support</span>
             </div>
             <div class="d-flex align-items-center">

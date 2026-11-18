@@ -20,3 +20,5 @@ yarn-error.log
 /.idea
 /.vscode
 whatsapp-notifier/node_modules
+/public/GambarProfileAdmin/
+laporan-struktur.txt

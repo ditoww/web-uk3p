@@ -64,7 +64,7 @@ class LoginController extends Controller
                 case 'support':
                     return redirect()->route('Support.support');
                 default:
-                    return redirect('/')->withErrors(['Unauthorized role']);
+                    return redirect('/login')->withErrors(['Unauthorized role']);
             }
         }
 

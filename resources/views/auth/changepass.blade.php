@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="icon" type="image/x-icon" href="{{asset('assetsadmin')}}/img/div.png" />
-  <title>Reset Password - TickDesk</title>
+  <title>Reset Password - UKKKP UNESA</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
@@ -58,7 +58,7 @@
 <body class="d-flex justify-content-center align-items-center vh-100 px-3">
 
   <div class="reset-card text-center">
-    <img src="{{asset('assetsadmin')}}/img/email-logo.png" alt="TickDesk Logo" class="reset-logo" />
+    <img src="{{asset('img/logo-ukkkp.jpg')}}" alt="UKKKP UNESA Logo" class="reset-logo" />
     <h5 class="fw-bold">Reset Your Password</h5>
     <p class="mt-2 mb-4 text-muted">
       Please enter your new password below.
