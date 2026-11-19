@@ -1,23 +1,28 @@
-@extends('public.layout')
-@section('title', 'Profil - UKKKP UNESA')
+@extends('layout.body')
+@section('konten')
 
-@section('content')
-<div class="container py-5">
-  <h1 class="mb-4">Profil</h1>
+<h4 class="mb-4">Profil</h4>
 
-  <h4>Tentang UKKKP UNESA</h4>
-  <p>Unit Kegiatan Kerohanian Kristen Protestan (UKKKP) UNESA adalah Unit Kegiatan Mahasiswa di Universitas Negeri Surabaya yang menjadi wadah pembinaan iman, pelayanan, dan kebersamaan bagi mahasiswa Kristen Protestan.</p>
+<div class="card mb-4"><div class="card-body">
+  <h5>Tentang UKKKP UNESA</h5>
+  <p class="mb-0">Unit Kegiatan Kerohanian Kristen Protestan (UKKKP) UNESA adalah Unit Kegiatan Mahasiswa di Universitas Negeri Surabaya yang menjadi wadah pembinaan iman, pelayanan, dan kebersamaan bagi mahasiswa Kristen Protestan.</p>
+</div></div>
 
-  <h4 class="mt-4">Sejarah</h4>
-  <p class="text-muted">[ISI: sejarah singkat berdirinya UKKKP UNESA]</p>
-
-  <h4 class="mt-4">Visi</h4>
-  <p class="text-muted">[ISI: visi resmi]</p>
-
-  <h4 class="mt-4">Misi</h4>
-  <p class="text-muted">[ISI: misi resmi]</p>
-
-  <h4 class="mt-4">Struktur Pengurus</h4>
-  <p class="text-muted">[ISI: periode kepengurusan, nama, dan jabatan. Di Tahap 2 ini dikelola lewat panel admin]</p>
+<div class="row g-4 mb-4">
+  <div class="col-md-4"><div class="card h-100"><div class="card-body">
+    <h5>Sejarah</h5><p class="text-muted mb-0">[ISI: sejarah singkat berdirinya UKKKP UNESA]</p>
+  </div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-body">
+    <h5>Visi</h5><p class="text-muted mb-0">[ISI: visi resmi]</p>
+  </div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-body">
+    <h5>Misi</h5><p class="text-muted mb-0">[ISI: misi resmi]</p>
+  </div></div></div>
 </div>
+
+<div class="card"><div class="card-body">
+  <h5>Struktur Pengurus</h5>
+  <p class="text-muted mb-0">[ISI: periode kepengurusan, nama, dan jabatan. Pada Tahap 2 bagian ini dikelola lewat panel admin]</p>
+</div></div>
+
 @endsection

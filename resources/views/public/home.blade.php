@@ -1,40 +1,57 @@
-@extends('public.layout')
-@section('title', 'UKKKP UNESA - Unit Kegiatan Kerohanian Kristen Protestan')
+@extends('layout.body')
+@section('konten')
 
-@section('content')
-<section class="hero py-5">
-  <div class="container py-4 text-center">
-    <h1 class="display-5 fw-bold">UKKKP UNESA</h1>
-    <p class="lead mb-4">Wadah pembinaan iman, pelayanan, dan kebersamaan bagi mahasiswa Kristen Protestan Universitas Negeri Surabaya.</p>
-    <a href="{{ route('kegiatan') }}" class="btn btn-accent btn-lg me-2">Lihat Kegiatan</a>
-    <a href="{{ route('kontak') }}" class="btn btn-outline-light btn-lg">Bergabung</a>
-  </div>
-</section>
-
-<section class="container py-5">
-  <div class="row g-4 text-center">
-    <div class="col-md-4">
-      <div class="pillar-icon">&#10013;</div>
-      <h4 class="mt-2">Pembinaan Iman</h4>
-      <p class="text-muted">Pertumbuhan rohani lewat ibadah, pendalaman Alkitab, dan persekutuan. [ISI: detail program]</p>
-    </div>
-    <div class="col-md-4">
-      <div class="pillar-icon">&#129309;</div>
-      <h4 class="mt-2">Pelayanan</h4>
-      <p class="text-muted">Melayani sesama di kampus dan masyarakat. [ISI: detail program]</p>
-    </div>
-    <div class="col-md-4">
-      <div class="pillar-icon">&#128101;</div>
-      <h4 class="mt-2">Kebersamaan</h4>
-      <p class="text-muted">Keluarga rohani lintas fakultas dan angkatan. [ISI: detail program]</p>
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+      <img src="{{ asset('img/logo-ukkkp.jpg') }}" alt="Logo UKKKP UNESA" width="110" height="110" class="rounded-circle border p-1 bg-white" style="object-fit:contain">
+      <div class="text-center text-md-start">
+        @auth
+          <h4 class="mb-1">Halo, {{ Auth::user()->name ?? Auth::user()->username }}</h4>
+        @else
+          <h4 class="mb-1">Selamat Datang di UKKKP UNESA</h4>
+        @endauth
+        <p class="mb-3">Unit Kegiatan Kerohanian Kristen Protestan Universitas Negeri Surabaya: wadah pembinaan iman, pelayanan, dan kebersamaan bagi mahasiswa Kristen Protestan.</p>
+        <a href="{{ route('kegiatan') }}" class="btn btn-primary me-2">Lihat Kegiatan</a>
+        @guest
+          <a href="{{ route('login') }}" class="btn btn-label-secondary">Masuk</a>
+        @endguest
+      </div>
     </div>
   </div>
-</section>
+</div>
 
-<section class="bg-light py-5">
-  <div class="container text-center">
-    <h3>Jadwal Ibadah &amp; Persekutuan</h3>
-    <p class="text-muted mb-0">[ISI: hari, jam, dan lokasi ibadah rutin]</p>
+<div class="row g-4 mb-4">
+  @foreach ([
+    ['Pembinaan Iman', 'Pertumbuhan rohani lewat ibadah, pendalaman Alkitab, dan persekutuan.', 'ti-book'],
+    ['Pelayanan', 'Melayani sesama di kampus dan masyarakat.', 'ti-heart'],
+    ['Kebersamaan', 'Keluarga rohani lintas fakultas dan angkatan.', 'ti-users'],
+  ] as [$judul, $isi, $ikon])
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="avatar mb-3"><span class="avatar-initial rounded bg-label-primary"><i class="ti {{ $ikon }} ti-md"></i></span></div>
+          <h5>{{ $judul }}</h5>
+          <p class="mb-0 text-muted">{{ $isi }} [ISI: detail program]</p>
+        </div>
+      </div>
+    </div>
+  @endforeach
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h5 class="mb-3">Jadwal Ibadah dan Persekutuan</h5>
+      <p class="text-muted mb-0">[ISI: hari, jam, dan lokasi ibadah rutin]</p>
+    </div></div>
   </div>
-</section>
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h5 class="mb-3">Pengumuman</h5>
+      <p class="text-muted mb-0">Belum ada pengumuman. Bagian ini akan bisa diisi lewat panel admin.</p>
+    </div></div>
+  </div>
+</div>
+
 @endsection

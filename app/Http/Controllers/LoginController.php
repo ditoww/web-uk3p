@@ -52,20 +52,10 @@ class LoginController extends Controller
 
             RateLimiter::clear($this->throttleKey($request));
 
-            switch (Auth::user()->privLevel) {
-                case 'super_admin':
-                    return redirect()->route('admin.admin');
-                case 'admin':
-                    return redirect()->route('akunadmin');
-                case 'spv':
-                    return redirect()->route('SPV.spv');
-                case 'developer':
-                    return redirect()->route('Developer.developer');
-                case 'support':
-                    return redirect()->route('Support.support');
-                default:
-                    return redirect('/login')->withErrors(['Unauthorized role']);
+            if (! in_array(Auth::user()->privLevel, ['super_admin', 'admin', 'spv', 'developer', 'support'])) {
+                return redirect('/login')->withErrors(['Unauthorized role']);
             }
+            return redirect()->route('home');
         }
 
         // Rate limit: 15 menit (900 detik)

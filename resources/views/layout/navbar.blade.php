@@ -431,7 +431,8 @@
                 </li> --}}
                 <!--/ Notification -->
 
-                <!-- User -->
+                @auth
+<!-- User -->
                 
                 <li class="nav-item navbar-dropdown dropdown-user dropdown">
                   <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
@@ -521,6 +522,10 @@
                   </ul>
                 </li>
                 <!--/ User -->
+@endauth
+@guest
+<li class="nav-item"><a class="btn btn-primary btn-sm" href="{{ route('login') }}"><i class="ti ti-login me-1"></i>Masuk</a></li>
+@endguest
               </ul>
             </div>
 

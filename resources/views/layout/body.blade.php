@@ -7,11 +7,11 @@
 
         <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
           <div class="app-brand demo">
-            <a href="/dashboard" class="app-brand-link">
+            <a href="/" class="app-brand-link">
               <span class="app-brand-logo">
-                <img src="{{asset('assetsadmin')}}/img/div.png" width="50" height="50" class="cl" alt="">
+                <img src="{{ asset('img/logo-ukkkp.jpg') }}" width="40" height="40" class="rounded-circle" style="object-fit:contain;background:#fff" alt="Logo UKKKP">
               </span>
-              <span class="app-brand-text demo menu-text fw-bold">UKKKP UNESA</span>
+              <span class="app-brand-text demo menu-text fw-bold" style="font-size:1.15rem;margin-left:.5rem">UKKKP UNESA</span>
             </a>
 
             <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
@@ -72,7 +72,7 @@
                     <script>
                       document.write(new Date().getFullYear());
                     </script>
-                    , Powered By <a href="#" target="_blank" class="fw-semibold">UKKKP UNESA</a>
+                    <span class="fw-semibold">UKKKP UNESA</span> &middot; Universitas Negeri Surabaya
                   </div>
                   <div>
                     {{-- <a onclick="showAlert()" class="footer-link me-4"
@@ -153,4 +153,6 @@ function showAlert() {
   </body>
 </html>
 
+@auth
 @include('layout.session')
+@endauth
