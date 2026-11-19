@@ -49,6 +49,17 @@ Route::middleware(['superadmin'])->group(function () {
     Route::post('/admin/password/{id}/validate', [ManualPasswordResetController::class, 'validateUpdate']);
 });
 
+// ===== Kelola konten website (admin dan super admin) =====
+Route::middleware(['auth'])->prefix('kelola')->name('kelola.konten.')->group(function () {
+    $c = \App\Http\Controllers\KelolaKontenController::class;
+    Route::get('/{page}', [$c, 'halaman'])->name('halaman')->where('page', 'beranda|profil|kegiatan|kontak');
+    Route::post('/{page}/teks', [$c, 'simpanTeks'])->name('teks')->where('page', 'beranda|profil|kegiatan|kontak');
+    Route::get('/item/{section}/tambah', [$c, 'tambah'])->name('tambah')->where('section', '[a-z_]+');
+    Route::post('/item/{section}', [$c, 'simpan'])->name('simpan')->where('section', '[a-z_]+');
+    Route::get('/item/{content}/ubah', [$c, 'ubah'])->name('ubah')->whereNumber('content');
+    Route::put('/item/{content}', [$c, 'perbarui'])->name('perbarui')->whereNumber('content');
+    Route::delete('/item/{content}', [$c, 'hapus'])->name('hapus')->whereNumber('content');
+});
 // ===== File dan foto profil =====
 Route::middleware(['images'])->group(function () {
     Route::get('/files/{filename}', [FileController::class, 'download'])->name('files.download');

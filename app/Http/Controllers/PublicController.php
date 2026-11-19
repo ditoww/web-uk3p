@@ -2,29 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
+use App\Models\Content;
+use App\Support\Setting;
 
 class PublicController extends Controller
 {
     public function home()
     {
-        $posts = Post::where('is_published', true)->orderByDesc('published_at')->take(3)->get();
-        return view('public.home', compact('posts'));
+        return view('public.home', [
+            'judul'  => Setting::get('home_title', 'Selamat Datang di UKKKP UNESA'),
+            'intro'  => Setting::get('home_intro', ''),
+            'pilar'  => Content::section('beranda_pilar')->tampil()->get(),
+            'jadwal' => Content::section('beranda_jadwal')->tampil()->get(),
+        ]);
     }
 
-    public function profil()   { return view('public.profil'); }
-    public function kegiatan() { return view('public.kegiatan'); }
-    public function kontak()   { return view('public.kontak'); }
-
-    public function berita()
+    public function profil()
     {
-        $posts = Post::where('is_published', true)->orderByDesc('published_at')->limit(50)->get();
-        return view('public.berita', compact('posts'));
+        return view('public.profil', [
+            'tentang'  => Setting::get('profil_tentang', ''),
+            'sejarah'  => Setting::get('profil_sejarah', ''),
+            'visi'     => Setting::get('profil_visi', ''),
+            'misi'     => Setting::get('profil_misi', ''),
+            'pengurus' => Content::section('profil_pengurus')->tampil()->get(),
+        ]);
     }
 
-    public function beritaShow(string $slug)
+    public function kegiatan()
     {
-        $post = Post::where('slug', $slug)->where('is_published', true)->firstOrFail();
-        return view('public.berita-show', compact('post'));
+        return view('public.kegiatan', [
+            'kegiatan' => Content::section('kegiatan')->tampil()->get(),
+        ]);
+    }
+
+    public function kontak()
+    {
+        return view('public.kontak', [
+            'alamat'    => Setting::get('kontak_alamat', ''),
+            'bergabung' => Setting::get('kontak_bergabung', ''),
+            'kontak'    => Content::section('kontak_item')->tampil()->get(),
+        ]);
     }
 }

@@ -22,3 +22,5 @@ yarn-error.log
 whatsapp-notifier/node_modules
 /public/GambarProfileAdmin/
 laporan-struktur.txt
+
+/public/uploads/
