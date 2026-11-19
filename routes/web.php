@@ -49,9 +49,6 @@ Route::middleware(['superadmin'])->group(function () {
     Route::post('/admin/password/{id}/validate', [ManualPasswordResetController::class, 'validateUpdate']);
 });
 
-// ===== Admin: modul konten (berita, pengurus, kegiatan, galeri) menyusul di Tahap 2 =====
-// Route::middleware(['admin'])->group(function () { ... });
-
 // ===== File dan foto profil =====
 Route::middleware(['images'])->group(function () {
     Route::get('/files/{filename}', [FileController::class, 'download'])->name('files.download');

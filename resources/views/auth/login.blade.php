@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="icon" type="image/x-icon" href="{{asset('assetsadmin')}}/img/div.png" />
+  <link rel="icon" type="image/jpeg" href="{{ asset('img/logo-ukkkp.jpg') }}?v=1" />
   <title>UKKKP UNESA Login</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
