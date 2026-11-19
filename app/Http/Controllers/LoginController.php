@@ -52,7 +52,7 @@ class LoginController extends Controller
 
             RateLimiter::clear($this->throttleKey($request));
 
-            if (! in_array(Auth::user()->privLevel, ['super_admin', 'admin', 'spv', 'developer', 'support'])) {
+            if (! in_array(Auth::user()->privLevel, ['super_admin', 'admin'])) {
                 return redirect('/login')->withErrors(['Unauthorized role']);
             }
             return redirect()->route('home');

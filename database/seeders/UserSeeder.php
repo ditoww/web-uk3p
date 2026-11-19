@@ -10,8 +10,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $users = [];
         $now = now();
+        $users = [];
 
         // Akun produksi: diisi lewat .env (SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, dst.)
         if (env('SEED_ADMIN_EMAIL') && env('SEED_ADMIN_PASSWORD')) {
@@ -27,14 +27,11 @@ class UserSeeder extends Seeder
             ];
         }
 
-        // Akun uji: hanya dibuat di lingkungan lokal
+        // Akun uji: hanya di lingkungan lokal
         if (app()->environment('local')) {
             foreach ([
-                ['Super Admin Uji', 'superadmin_test', 'superadmin@ticketing.dev', 'super_admin', '081234567890'],
-                ['Admin 1',         'admin1',          'admin1@ticketing.dev',     'admin',       '081234567891'],
-                ['Developer 1',     'dev1',            'dev1@ticketing.dev',       'developer',   '081234567892'],
-                ['Supervisor',      'spv',             'spv@ticketing.dev',        'spv',         '081234567893'],
-                ['Support 1',       'support1',        'support1@ticketing.dev',   'support',     '081234567894'],
+                ['Super Admin Uji', 'superadmin_test', 'superadmin@ukkkp.test', 'super_admin', '081234567890'],
+                ['Admin Uji',       'admin1',          'admin1@ukkkp.test',      'admin',       '081234567891'],
             ] as [$name, $username, $email, $role, $phone]) {
                 $users[] = [
                     'name' => $name,

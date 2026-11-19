@@ -163,7 +163,7 @@ class AdminController extends Controller
         $akun = User::where('username', $username)->first();
 
         if (!$akun) {
-            return redirect()->route('akun.supervisor')->with('error', 'Akun tidak ditemukan.');
+            return redirect()->route('admin.admin')->with('error', 'Akun tidak ditemukan.');
         }
 
         $request->validate([

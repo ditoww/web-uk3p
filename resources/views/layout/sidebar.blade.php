@@ -30,70 +30,14 @@
 </li>
 
 @auth
-@if(in_array(Auth::user()->privLevel, ['admin', 'super_admin']))
-
-<li class="menu-header small text-uppercase">
-    <span class="menu-header-text">Akun</span>
-</li>
-
 @if(Auth::user()->isSuperAdmin())
+<li class="menu-header small text-uppercase">
+    <span class="menu-header-text">Pengaturan</span>
+</li>
 <li class="menu-item {{ Request::is('admin/admin*') ? 'active' : '' }}">
     <a href="/admin/admin" class="menu-link">
         <i class="menu-icon tf-icons ti ti-user"></i>
         <div data-i18n="Akun Admin">Akun Admin</div>
-    </a>
-</li>
-@endif
-
-<li class="menu-item {{ (Request::is('admin/akun*') || Request::is('akun*')) ? 'active' : '' }}">
-    <a href="/admin/akun" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-user-search"></i>
-        <div data-i18n="Akun Developer">Akun Developer</div>
-    </a>
-</li>
-<li class="menu-item {{ Request::is('admin/supervisor*') ? 'active' : '' }}">
-    <a href="/admin/supervisor" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-user-plus"></i>
-        <div data-i18n="Akun Supervisor">Akun Supervisor</div>
-    </a>
-</li>
-<li class="menu-item {{ Request::is('admin/support*') ? 'active' : '' }}">
-    <a href="/admin/support" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-users"></i>
-        <div data-i18n="Akun Support">Akun Support</div>
-    </a>
-</li>
-
-@if(Auth::user()->isSuperAdmin())
-<li class="menu-header small text-uppercase">
-    <span class="menu-header-text">Tiket</span>
-</li>
-<li class="menu-item {{ Request::is('admin/ticketsupport*') ? 'active' : '' }}">
-    <a href="/admin/ticketsupport" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-ticket"></i>
-        <div data-i18n="Tiket Support">Tiket Support</div>
-    </a>
-</li>
-<li class="menu-item {{ Request::is('admin/ticketclient*') ? 'active' : '' }}">
-    <a href="/admin/ticketclient" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-ticket"></i>
-        <div data-i18n="Tiket Client">Tiket Client</div>
-    </a>
-</li>
-
-<li class="menu-header small text-uppercase">
-    <span class="menu-header-text">DLL</span>
-</li>
-<li class="menu-item {{ Request::is('admin/role*') ? 'active' : '' }}">
-    <a href="/admin/role" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-id-badge"></i>
-        <div data-i18n="Role">Role</div>
-    </a>
-</li>
-<li class="menu-item {{ Request::is('admin/application*') ? 'active' : '' }}">
-    <a href="/admin/application" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-badge"></i>
-        <div data-i18n="Aplikasi">Aplikasi</div>
     </a>
 </li>
 <li class="menu-item {{ Request::is('admin/password*') ? 'active' : '' }}">
@@ -102,20 +46,6 @@
         <div data-i18n="Reset Password">Reset Password</div>
     </a>
 </li>
-@endif
-
-@else
-
-<li class="menu-header small text-uppercase">
-    <span class="menu-header-text">Pekerjaan</span>
-</li>
-<li class="menu-item">
-    <a href="{{ route('dashboard') }}" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-ticket"></i>
-        <div data-i18n="Dashboard Tiket">Dashboard Tiket</div>
-    </a>
-</li>
-
 @endif
 @endauth
 
