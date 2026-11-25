@@ -1,0 +1,132 @@
+services:
+  # -------------------------------------------------------
+  # Laravel PHP-FPM Application Service
+  # -------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: uk3p-app
+    restart: unless-stopped
+    working_dir: /var/www
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - WHATSAPP_MICROSERVICE_URL=http://whatsapp-notifier:4001
+      - AUTO_MIGRATE=false
+    volumes:
+      - ./.env:/var/www/.env
+      - storage_data:/var/www/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - uk3p-network
+
+  # -------------------------------------------------------
+  # Nginx Web Server (Frontend & Reverse Proxy to PHP-FPM)
+  # -------------------------------------------------------
+  webserver:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: uk3p-webserver
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8085}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - storage_data:/var/www/storage:ro
+    depends_on:
+      - app
+    networks:
+      - uk3p-network
+
+  # -------------------------------------------------------
+  # MySQL Database Service
+  # -------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: uk3p-db
+    restart: unless-stopped
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-uk3p_db}
+      MYSQL_USER: ${DB_USERNAME:-uk3p_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-uk3p_secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$${DB_ROOT_PASSWORD:-root_secret} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - uk3p-network
+
+  # -------------------------------------------------------
+  # WhatsApp Notifier Microservice (Node.js)
+  # -------------------------------------------------------
+  whatsapp-notifier:
+    build:
+      context: ./whatsapp-notifier
+      dockerfile: Dockerfile
+    container_name: uk3p-whatsapp-notifier
+    restart: unless-stopped
+    environment:
+      - PORT=4001
+      - WA_API_URL=${WA_API_URL:-https://graph.facebook.com}
+      - WA_API_VERSION=${WA_API_VERSION:-v22.0}
+      - WA_PHONE_ID=${WHATSAPP_PHONE_ID}
+      - WA_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WA_NOTIFICATION_TEMPLATE_NAME=${WHATSAPP_NOTIFICATION_TEMPLATE_NAME}
+    ports:
+      - "${WA_NOTIFIER_PORT:-4001}:4001"
+    networks:
+      - uk3p-network
+
+  # -------------------------------------------------------
+  # Laravel Queue Worker (Optional for background jobs)
+  # -------------------------------------------------------
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: uk3p-queue
+    restart: unless-stopped
+    working_dir: /var/www
+    entrypoint: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90"]
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+    volumes:
+      - ./.env:/var/www/.env
+      - storage_data:/var/www/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - uk3p-network
+
+volumes:
+  db_data:
+    driver: local
+  storage_data:
+    driver: local
+
+# ---------------------------------------------------------
+# Docker Bridge Network
+# ---------------------------------------------------------
+networks:
+  uk3p-network:
+    driver: bridge
+
