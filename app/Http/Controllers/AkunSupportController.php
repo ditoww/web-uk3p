@@ -71,7 +71,7 @@ class AkunSupportController extends Controller
     public function validateCreate(Request $request): \Illuminate\Http\JsonResponse
     {
         $rules = [
-            'username' => 'required|unique:users|max:31|regex:/^[A-Za-z0-9]+$/',
+            'username' => 'required|max:31|regex:/^[A-Za-z0-9]+$/',
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
@@ -83,7 +83,6 @@ class AkunSupportController extends Controller
 
         $messages = [
             'username.required' => 'Mohon isi username untuk Support.',
-            'username.unique' => 'Username tersebut sudah dipakai.',
             'username.max' => 'Panjang username harus 31 huruf atau dibawahnya.',
             'username.regex' => 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
             'nama.required' => 'Mohon isi nama lengkap untuk Support.',
@@ -110,7 +109,7 @@ class AkunSupportController extends Controller
     public function save(Request $request)
     {
         $rules = [
-            'username' => 'required|unique:users|max:31|regex:/^[A-Za-z0-9]+$/',
+            'username' => 'required|max:31|regex:/^[A-Za-z0-9]+$/',
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
@@ -122,7 +121,6 @@ class AkunSupportController extends Controller
 
         $messages = [
             'username.required' => 'Mohon isi username untuk Support.',
-            'username.unique' => 'Username tersebut sudah dipakai.',
             'username.max' => 'Panjang username harus 31 huruf atau dibawahnya.',
             'username.regex' => 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
             'nama.required' => 'Mohon isi nama lengkap untuk Support.',

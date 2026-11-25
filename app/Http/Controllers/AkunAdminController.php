@@ -33,7 +33,7 @@ class AkunAdminController extends Controller
     public function save(Request $request)
     {
         $rules = [
-            'username' => 'required|unique:users|max:31|regex:/^[A-Za-z0-9]+$/',
+            'username' => 'required|max:31|regex:/^[A-Za-z0-9]+$/',
             'nama' => 'required|max:150||regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
@@ -46,7 +46,6 @@ class AkunAdminController extends Controller
 
         $messages = [
             'username.required' => 'Mohon isi username untuk Developer.',
-            'username.unique' => 'Username tersebut sudah dipakai.',
             'username.max' => 'Panjang username harus 255 huruf atau dibawahnya.',
             'username.regex' => 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
             'nama.required' => 'Mohon isi nama lengkap untuk Developer.',
@@ -266,7 +265,7 @@ class AkunAdminController extends Controller
     public function validateCreate(Request $request)
     {
         $rules = [
-            'username' => 'required|unique:users|max:31|regex:/^[A-Za-z0-9]+$/',
+            'username' => 'required|max:31|regex:/^[A-Za-z0-9]+$/',
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
@@ -279,7 +278,6 @@ class AkunAdminController extends Controller
 
         $messages = [
             'username.required' => 'Mohon isi username untuk Developer.',
-            'username.unique' => 'Username tersebut sudah dipakai.',
             'username.max' => 'Panjang username harus 255 huruf atau dibawahnya.',
             'username.regex' => 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
             'nama.required' => 'Mohon isi nama lengkap untuk Developer.',

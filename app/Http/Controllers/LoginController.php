@@ -38,6 +38,12 @@ class LoginController extends Controller
         // Tentukan apakah input adalah email atau username
         $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
+        if ($field === 'username' && User::where('username', $login)->count() > 1) {
+            return back()->withErrors([
+                'login' => 'Username ini digunakan oleh beberapa akun. Silakan login menggunakan email.',
+            ])->onlyInput('login');
+        }
+
         // Cek status user terhapus
         $user = User::where($field, $login)->first();
         if ($user && $user->isDeleted !== 0) {

@@ -33,6 +33,12 @@ class PasswordResetController extends Controller
 
         $field = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
+        if ($field === 'username' && User::where('username', $request->email)->count() > 1) {
+            return back()->withErrors([
+                'email' => 'Username ini digunakan oleh beberapa akun. Silakan masukkan email Anda.',
+            ]);
+        }
+
         // Check if user exists
         $user = User::where($field, $request->email)->where('isDeleted', 0)->first();
 

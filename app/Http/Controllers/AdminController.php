@@ -26,7 +26,7 @@ class AdminController extends Controller
     {
         //Use Validator to redirect with the error pop-up.
         $rules = [
-            'username' => 'required|unique:users|max:31|regex:/^[A-Za-z0-9]+$/',
+            'username' => 'required|max:31|regex:/^[A-Za-z0-9]+$/',
             'nama' => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email' => 'nullable|email|max:191',
             'nohp' => 'nullable|regex:/^[0-9]{10,13}$/',
@@ -38,7 +38,6 @@ class AdminController extends Controller
 
         $messages = [
             'username.required' => 'Mohon isi username untuk Admin.',
-            'username.unique' => 'Username tersebut sudah dipakai.',
             'username.max' => 'Panjang username harus 31 huruf atau dibawahnya.',
             'username.regex' => 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
             'nama.required' => 'Mohon isi nama lengkap untuk Admin.',
@@ -116,9 +115,9 @@ class AdminController extends Controller
         return redirect()->route('admin.admin')->with('success', 'Data Akun Telah Ditambahkan!');
     }
 
-    public function hapusData($username)
+    public function hapusData($id)
     {
-        $user = User::where('username', $username)->first();
+        $user = User::find($id);
 
         if ($user) {
             try {
@@ -145,9 +144,9 @@ class AdminController extends Controller
         return response()->json(['error' => true, 'message' => 'Data tidak ditemukan!']);
     }
 
-    public function edit($username)
+    public function edit($id)
     {
-        $akun = User::where('username', $username)->first();
+        $akun = User::find($id);
 
         if (!$akun) {
             return redirect()->route('admin.admin')->with('error', 'Akun tidak ditemukan.');
@@ -158,9 +157,9 @@ class AdminController extends Controller
         ]);
     }
 
-    public function update(Request $request, $username)
+    public function update(Request $request, $id)
     {
-        $akun = User::where('username', $username)->first();
+        $akun = User::find($id);
 
         if (!$akun) {
             return redirect()->route('admin.admin')->with('error', 'Akun tidak ditemukan.');
@@ -245,7 +244,7 @@ class AdminController extends Controller
     public function validateCreate(Request $request): \Illuminate\Http\JsonResponse
     {
         $rules = [
-            'username' => 'required|unique:users|max:31|regex:/^[A-Za-z0-9]+$/',
+            'username' => 'required|max:31|regex:/^[A-Za-z0-9]+$/',
             'nama'     => 'required|max:150|regex:/^[A-Za-z ]+$/',
             'email'    => 'nullable|email|max:191',
             'nohp'     => 'nullable|regex:/^[0-9]{10,13}$/',
@@ -257,7 +256,6 @@ class AdminController extends Controller
 
         $messages = [
             'username.required' => 'Mohon isi username untuk Admin.',
-            'username.unique'   => 'Username tersebut sudah dipakai.',
             'username.max'      => 'Panjang username harus 31 huruf atau dibawahnya.',
             'username.regex'    => 'Username tersebut hanya menggunakan huruf besar, huruf kecil, dan angka.',
             'nama.required'     => 'Mohon isi nama lengkap untuk Admin.',

@@ -33,12 +33,12 @@ Route::middleware(['superadmin'])->group(function () {
     Route::get('/admin/admin', [AdminController::class, 'index'])->name('admin.admin');
     Route::post('/admin/admin/validate', [AdminController::class, 'validateCreate'])->name('admin.admin.validate');
     Route::post('/admin/admin/tambah-data', [AdminController::class, 'save']);
-    Route::get('/admin/admin/edit-data/{username}', [AdminController::class, 'edit']);
-    Route::post('/admin/admin/update-data/{username}', [AdminController::class, 'update']);
-    Route::delete('/admin/admin/user/hapus-akun/{username}', [AdminController::class, 'hapusData']);
+    Route::get('/admin/admin/edit-data/{id}', [AdminController::class, 'edit'])->whereNumber('id');
+    Route::post('/admin/admin/update-data/{id}', [AdminController::class, 'update'])->whereNumber('id');
+    Route::delete('/admin/admin/user/hapus-akun/{id}', [AdminController::class, 'hapusData'])->whereNumber('id');
 
-    Route::get('/admin/admin/update-data/{username}', [AdminController::class, 'edit']);
-    Route::get('/admin/admin/user/hapus-akun/{username}', [AdminController::class, 'index']);
+    Route::get('/admin/admin/update-data/{id}', [AdminController::class, 'edit'])->whereNumber('id');
+    Route::get('/admin/admin/user/hapus-akun/{id}', [AdminController::class, 'index'])->whereNumber('id');
     Route::get('/admin/admin/tambah-data', [AdminController::class, 'index']);
     Route::get('/admin/admin/validate', [AdminController::class, 'index']);
 

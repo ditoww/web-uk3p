@@ -155,11 +155,11 @@
                                                 <i class="ti ti-list-details me-1"></i> Detail Data</button>
 
                                             <a class="dropdown-item ssedtt"
-                                                href="/admin/admin/edit-data/{{ $p->username }}">
+                                                href="/admin/admin/edit-data/{{ $p->id }}">
                                                 <i class="ti ti-pencil me-1"></i> Edit Data</a>
 
                                             <a class="dropdown-item ssdele" href="javascript:void(0);"
-                                                data-user="{{ $p->username }}" data-nama="{{ $p->name }}">
+                                                data-user="{{ $p->id }}" data-nama="{{ $p->name }}">
                                                 <i class="ti ti-trash me-1"></i> Hapus Data
                                             </a>
                                         </div>
@@ -649,11 +649,11 @@
         <script>
             $(document).ready(function() {
                 $('.ssdele').click(function() {
-                    var user = $(this).data('user');
+                    var userId = $(this).data('user');
                     var nama = $(this).data('nama');
 
                     Swal.fire({
-                        title: 'Apakah Anda yakin ingin menghapus data nama ' + user + '?',
+                        title: 'Apakah Anda yakin ingin menghapus akun ' + nama + '?',
                         text: "Tindakan ini tidak dapat dibatalkan!",
                         icon: 'warning',
                         showCancelButton: true,
@@ -672,7 +672,7 @@
                         if (result.isConfirmed) {
                             $.ajax({
                                 type: 'DELETE', // Ubah method menjadi DELETE
-                                url: '/admin/admin/user/hapus-akun/' + user,
+                                url: '/admin/admin/user/hapus-akun/' + userId,
                                 data: {
                                     _token: '{{ csrf_token() }}'
                                 },

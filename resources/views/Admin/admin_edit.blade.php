@@ -30,7 +30,7 @@
             <h4>Edit Data Akun Admin</h4>
         </div>
         <div class="card-body">
-            <form method="POST" id="form-form" action="/admin/admin/update-data/{{$akun->username}}" enctype="multipart/form-data">
+            <form method="POST" id="form-form" action="/admin/admin/update-data/{{$akun->id}}" enctype="multipart/form-data">
                 @csrf
 
                 <!-- Username -->
