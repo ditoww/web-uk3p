@@ -39,7 +39,6 @@ class PublicController extends Controller
     {
         return view('public.kontak', [
             'alamat'    => Setting::get('kontak_alamat', ''),
-            'bergabung' => Setting::get('kontak_bergabung', ''),
             'kontak'    => Content::section('kontak_item')->tampil()->get(),
         ]);
     }

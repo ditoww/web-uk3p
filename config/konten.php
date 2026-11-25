@@ -57,7 +57,6 @@ return [
             'route' => 'kontak',
             'settings' => [
                 'kontak_alamat' => ['label' => 'Alamat Sekretariat', 'type' => 'textarea', 'max' => 1000],
-                'kontak_bergabung' => ['label' => 'Cara Bergabung', 'type' => 'textarea', 'max' => 3000],
             ],
             'sections' => ['kontak_item'],
         ],
